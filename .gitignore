@@ -6,6 +6,12 @@
 *.lo
 *.o
 *.obj
+*.vcxproj
+*.vcxproj.user
+*.sln
+/.vs
+/bin
+/bin-int
 
 # Precompiled Headers
 *.gch
@@ -27,6 +33,5 @@
 *.lib
 
 # Executables
-*.exe
 *.out
 *.app
