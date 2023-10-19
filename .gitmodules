@@ -1,0 +1,6 @@
+[submodule "enginecore/libs/spdlog"]
+	path = enginecore/libs/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "enginecore/libs/glfw"]
+	path = enginecore/libs/glfw
+	url = https://github.com/glfw/glfw.git
