@@ -1,22 +1,29 @@
-#include "Application.h"
-
+#include "application.h"
 #include "log.h"
 
 namespace ec {
 
-
-	void Application::create(void (*createCallback)(), void (*updateCallback)())
+	void createApplication(ApplicationCreateInfo& createInfo)
 	{
-		
-		Log::create();
-		
-		bool open = true;
-		createCallback();
-		while (open) {
 
-			updateCallback();
+		Application app = {};
+
+		Log::create();
+
+		createWindow(app.window, createInfo.windowCreateInfo);
+
+		bool open = true;
+		createInfo.createCallback(app);
+		while (!open) {
+			updateWindow(app.window, open);
+
+
+			createInfo.updateCallback();
 
 		}
+
+		terminateWindow(app.window);
+
 		Log::terminate();
 	}
 

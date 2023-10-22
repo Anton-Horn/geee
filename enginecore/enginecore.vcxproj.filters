@@ -4,12 +4,15 @@
     <Filter Include="core">
       <UniqueIdentifier>{4E40957C-3A77-960D-E363-7C10CF79120F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="rendering">
+      <UniqueIdentifier>{03CFAD0B-6F39-6282-B877-1328242140D7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rendering\vulkan">
+      <UniqueIdentifier>{438FA8C4-2F88-C716-58BA-AC9B4412A722}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\core\Application.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\Window.h">
+    <ClInclude Include="src\core\application.h">
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\core.h">
@@ -19,16 +22,54 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="src\ec.h" />
+    <ClInclude Include="src\rendering\vulkan\vulkan_renderer.h">
+      <Filter>rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rendering\vulkan\vulkan_core.h">
+      <Filter>rendering\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rendering\vulkan\vulkan_utils.h">
+      <Filter>rendering\vulkan</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\core\Application.cpp">
-      <Filter>core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\Window.cpp">
+    <ClCompile Include="src\core\application.cpp">
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\log.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\window.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan\buffer.cpp">
+      <Filter>rendering\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan\context.cpp">
+      <Filter>rendering\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan\framebuffer.cpp">
+      <Filter>rendering\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan\image.cpp">
+      <Filter>rendering\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan\pipeline.cpp">
+      <Filter>rendering\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan\renderpass.cpp">
+      <Filter>rendering\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan\shader.cpp">
+      <Filter>rendering\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan\swapchain.cpp">
+      <Filter>rendering\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan\vma_implementation.cpp">
+      <Filter>rendering\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\file_utils.h" />
+    <ClCompile Include="src\utils\file_utils.cpp" />
   </ItemGroup>
 </Project>

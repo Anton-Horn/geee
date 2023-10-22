@@ -1,7 +1,7 @@
 #include "ec.h"
 
-void create() {
-	ec::logInfo("create");
+void create(ec::Application& app) {
+	
 }
 
 void update(){
@@ -10,8 +10,12 @@ void update(){
 
 int main() {
 
-	ec::Application app;
-	app.create(create, update);
+	ec::ApplicationCreateInfo createInfo;
+	createInfo.createCallback = create;
+	createInfo.updateCallback = update;
+	createInfo.windowCreateInfo = { 1280, 720, "editor" };
+
+	ec::createApplication(&createInfo);
 
 	return 0;
 

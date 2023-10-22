@@ -1,40 +1,35 @@
 #pragma once
+#include <spdlog/spdlog.h>
 
 #include "core/core.h"
 
 //Log Defines
 
 #ifdef DEBUG 
-#define logInfo(x) Log::info(x)
-#define logWarn(x) Log::warn(x);
-#define logError(x) Log::Error(x);
-
+#define EC_LOG(...) Log::s_baseLogger->trace(__VA_ARGS__)
+#define EC_INFO(...) Log::s_baseLogger->info(__VA_ARGS__)
+#define EC_WARN(...) Log::s_baseLogger->warn(__VA_ARGS__)
+#define EC_ERROR(...) Log::s_baseLogger->error(__VA_ARGS__)
 #else
-#define logInfo(x) 
-#define logWarn(x) 
-#define logError(x) 
+#define EC_LOG(...) 
+#define EC_WARN(...) 
+#define EC_INFO(...)
+#define EC_ERROR(...)
 #endif
 
 namespace spdlog {
 	class logger;
 }
-namespace ec {
 
 class Log {
 
 public:
 
-	static void info(const std::string& m);
-	static void warn(const std::string& m);
-	static void error(const std::string& m);
+	static std::shared_ptr<spdlog::logger> s_baseLogger;
 
 	static void create();
 	static void terminate();
 
-private:
-
-	static std::shared_ptr<spdlog::logger> s_baseLogger;
 
 };
 
-}
