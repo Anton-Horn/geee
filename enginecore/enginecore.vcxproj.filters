@@ -22,15 +22,18 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="src\ec.h" />
-    <ClInclude Include="src\rendering\vulkan\vulkan_renderer.h">
+    <ClInclude Include="src\rendering\vulkan_impl\vulkan_renderer.h">
       <Filter>rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\rendering\vulkan\vulkan_core.h">
+    <ClInclude Include="src\rendering\vulkan_impl\vulkan_core.h">
       <Filter>rendering\vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="src\rendering\vulkan\vulkan_utils.h">
+    <ClInclude Include="src\rendering\vulkan_impl\vulkan_utils.h">
       <Filter>rendering\vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="src\rendering\renderer.h" />
+    <ClInclude Include="src\rendering\stb_image.h" />
+    <ClInclude Include="src\core\window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp">
@@ -42,34 +45,38 @@
     <ClCompile Include="src\core\window.cpp">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan\buffer.cpp">
+    <ClCompile Include="src\rendering\vulkan_impl\buffer.cpp">
       <Filter>rendering\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan\context.cpp">
+    <ClCompile Include="src\rendering\vulkan_impl\context.cpp">
       <Filter>rendering\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan\framebuffer.cpp">
+    <ClCompile Include="src\rendering\vulkan_impl\framebuffer.cpp">
       <Filter>rendering\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan\image.cpp">
+    <ClCompile Include="src\rendering\vulkan_impl\image.cpp">
       <Filter>rendering\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan\pipeline.cpp">
+    <ClCompile Include="src\rendering\vulkan_impl\pipeline.cpp">
       <Filter>rendering\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan\renderpass.cpp">
+    <ClCompile Include="src\rendering\vulkan_impl\renderpass.cpp">
       <Filter>rendering\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan\shader.cpp">
+    <ClCompile Include="src\rendering\vulkan_impl\shader.cpp">
       <Filter>rendering\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan\swapchain.cpp">
+    <ClCompile Include="src\rendering\vulkan_impl\swapchain.cpp">
       <Filter>rendering\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan\vma_implementation.cpp">
+    <ClCompile Include="src\rendering\vulkan_impl\vma_implementation.cpp">
       <Filter>rendering\vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\file_utils.h" />
     <ClCompile Include="src\utils\file_utils.cpp" />
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_synchronisation.cpp" />
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_quad_renderer.cpp" />
+    <ClCompile Include="src\rendering\renderer.cpp" />
+    <ClCompile Include="src\rendering\stb_image.cpp" />
   </ItemGroup>
 </Project>

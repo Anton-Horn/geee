@@ -1,23 +1,12 @@
 #pragma once
 #include "core/core.h"
+#include "core/window.h"
 
 struct GLFWwindow;
 
 namespace ec {
 
-	struct WindowCreateInfo {
-
-		uint32_t width;
-		uint32_t height;
-		std::string title;
-
-	};
-
-	struct Window {
-
-		GLFWwindow* nativWindow;
-
-	};
+	
 
 	struct Application;
 
@@ -29,16 +18,27 @@ namespace ec {
 
 	};
 
-	struct Application {
+	class Application {
 
-		Window window;
+	public:
+
+		Application() = default;
+		~Application() = default;
+
+		Application(const Application&) = delete;
+		Application& operator=(const Application&) = delete;
+
+		Application(Application&&) = delete;
+		Application& operator=(Application&&) = delete;
+
+		void create(ApplicationCreateInfo& createInfo);
+		const Window& getWindow() const;
+
+	private:
+
+		Window m_window;
 
 	};
 
-	void createApplication(ApplicationCreateInfo& createInfo);
-
-	void createWindow(Window& window, WindowCreateInfo& createInfo);
-	void updateWindow(Window& window, bool& open);
-	void terminateWindow(Window& window);
 
 }

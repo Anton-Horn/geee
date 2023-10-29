@@ -3,28 +3,29 @@
 
 namespace ec {
 
-	void createApplication(ApplicationCreateInfo& createInfo)
+	void Application::create(ApplicationCreateInfo& createInfo)
 	{
-
-		Application app = {};
 
 		Log::create();
 
-		createWindow(app.window, createInfo.windowCreateInfo);
+		m_window.create(createInfo.windowCreateInfo);
 
-		bool open = true;
-		createInfo.createCallback(app);
-		while (!open) {
-			updateWindow(app.window, open);
-
+		bool close = false;
+		createInfo.createCallback(*this);
+		while (!close) {
+			m_window.update(close);
 
 			createInfo.updateCallback();
-
 		}
 
-		terminateWindow(app.window);
+		m_window.terminate();
 
 		Log::terminate();
+	}
+
+	const Window& Application::getWindow() const
+	{
+		return m_window;
 	}
 
 }

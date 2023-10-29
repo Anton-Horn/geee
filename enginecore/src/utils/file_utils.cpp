@@ -1,9 +1,11 @@
 #include "file_utils.h"
 
-std::vector<uint8_t> ecUtilReadBinaryFile(const std::filesystem::path& filePath) {
+std::vector<uint8_t> ecUtilsReadBinaryFile(const std::filesystem::path& filePath) {
 
 	std::streampos fileSize;
 	std::ifstream file(filePath, std::ios::binary);
+	EC_ASSERT(file.good());
+
 
 	file.seekg(0, std::ios::end);
 	fileSize = file.tellg();
@@ -16,3 +18,5 @@ std::vector<uint8_t> ecUtilReadBinaryFile(const std::filesystem::path& filePath)
 	return fileData;
 
 }
+
+

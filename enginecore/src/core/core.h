@@ -8,10 +8,18 @@
 #include <string>
 #include <fstream>
 #include <optional>
+#include <filesystem>
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof((x)[0]))
+
+#define DEFAULT_CON_DEFAULT_DE_NO_COPY_NO_MOVE(x) x() = default;\
+												 ~x() = default;\
+												 x(const x&) = delete;\
+												 x& operator=(const x&) = delete;\
+												 x(const x&&) = delete;\
+												 x& operator=(const x&&) = delete;\
 
 #ifdef EC_WINDOWS
 	
