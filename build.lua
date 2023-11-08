@@ -14,7 +14,7 @@ workspace "gameengine"
     Library = {}
     Library["Vulkan"] = "%{VULKAN_SDK}/Lib"
 
-group "libs"
+group "engine_libs"
 include "enginecore/libs"
 group ""
 
@@ -56,6 +56,9 @@ project "enginecore"
     filter "system:windows"
     defines {"EC_WINDOWS"}
 
+group "editor_libs"
+include "engineeditor/libs"
+group ""
 
 project "engineeditor"  
     kind "ConsoleApp"
@@ -68,11 +71,17 @@ project "engineeditor"
     includedirs {
         "%{wks.location}/%{prj.name}/src",
         "%{wks.location}/enginecore/src",
-        IncludeDirs["spdlog"]
+        IncludeDirs["spdlog"],
+        IncludeDirs["Vulkan"],
+        IncludeDirs["glfw"],
+        IncludeDirs["glm"],
+        IncludeDirs["vma"],
+        "engineeditor/libs/imgui"
     }
 
     links {
-        "enginecore"
+        "enginecore",
+        "imgui"
     }
 
     filter "configurations:Debug"
@@ -81,4 +90,7 @@ project "engineeditor"
     filter "configurations:Release"  
     defines { "NDEBUG" }    
     optimize "On" 
+
+    filter "system:windows"
+    defines {"EC_WINDOWS"}
 

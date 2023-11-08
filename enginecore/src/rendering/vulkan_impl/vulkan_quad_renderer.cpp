@@ -6,7 +6,7 @@
 
 namespace ec {
 
-	void VulkanQuadRenderer::create( VulkanContext& context, QuadRendererCreateInfo& createInfo) {
+	void VulkanQuadRenderer::create( VulkanContext& context, VulkanQuadRendererCreateInfo& createInfo) {
 
 		VkSamplerCreateInfo samplerCreateInfo = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
 		samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
@@ -22,9 +22,13 @@ namespace ec {
 
 		VKA(vkCreateSampler(context.getData().device, &samplerCreateInfo, nullptr, &m_data.sampler));
 
-		VkAttachmentDescription colorAttachment = createAttachment(1, createInfo.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
+		VkAttachmentDescription colorAttachment = createAttachment(1, createInfo.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE);
+		std::vector<VkAttachmentReference> colorAttachmentReferences = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+		std::vector<VkAttachmentReference> resolveAttachments = {};
+		std::vector<VkAttachmentReference> inputAttachments = {};
+		VkSubpassDescription subpassDescription = createSubpass(colorAttachmentReferences, resolveAttachments, inputAttachments);
 
-		m_data.renderpass.create(context, { colorAttachment }, { createSubpass({{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}}) });
+		m_data.renderpass.create(context, { colorAttachment }, { subpassDescription });
 
 		VulkanPipelineCreateInfo pipelineCreateInfo;
 		pipelineCreateInfo.subpassIndex = 0;
@@ -62,10 +66,10 @@ namespace ec {
 
 		m_data.objectDataBuffer.create(context, alignToPow2(context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(QuadUniformBuffer)) * m_data.MAX_QUAD_COUNT, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, MemoryType::Host_local);
 
-		m_data.descriptorPool = createDesciptorPool(context, m_data.MAX_QUAD_COUNT, { {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, m_data.MAX_QUAD_COUNT} });
+		m_data.descriptorPool = createDesciptorPool(context, m_data.MAX_QUAD_COUNT, { {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, m_data.MAX_QUAD_COUNT}, {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, m_data.MAX_QUAD_COUNT } });
 
 		m_data.globalDataBuffer.create(context, alignToPow2(context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(glm::mat4)), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, MemoryType::Host_local);
-		glm::mat4 proj = glm::ortho(0.0f, 1280.0f, 0.0f, 720.0f);
+		glm::mat4 proj = glm::ortho(0.0f, 1280.0f, 720.0f, 0.0f);
 		m_data.globalDataBuffer.uploadData(context, &proj, sizeof(glm::mat4), 0);
 
 		m_data.globalDataDescriptorSet = allocateDescriptorSet(context, context.getData().generalDescriptorPool, m_data.pipeline.getShaders().getLayouts()[0]);
@@ -87,6 +91,8 @@ namespace ec {
 
 	void VulkanQuadRenderer::beginFrame(VulkanContext& context, VulkanWindow& window)
 	{
+
+		EC_ASSERT(m_data.state == QuadRendererState::OUT_OF_FRAME);
 
 		VKA(vkResetDescriptorPool(context.getData().device, m_data.descriptorPool, 0));
 
@@ -179,12 +185,18 @@ namespace ec {
 
 	VkCommandBuffer VulkanQuadRenderer::endFrame(VulkanContext& context)
 	{
+		EC_ASSERT(m_data.state == QuadRendererState::IN_FRAME);
 		vkCmdEndRenderPass(m_data.commandBuffer);
 
 		vkEndCommandBuffer(m_data.commandBuffer);
 		m_data.state = QuadRendererState::OUT_OF_FRAME;
 		m_data.quadCount = 0;
 		return m_data.commandBuffer;
+	}
+
+	const VulkanQuadRendererData& VulkanQuadRenderer::getData() const
+	{
+		return m_data;
 	}
 
 

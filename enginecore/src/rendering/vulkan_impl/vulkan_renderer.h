@@ -4,11 +4,13 @@
 #include "core/core.h"
 #include "vulkan_core.h"
 
+#define FRAMES_IN_FLIGHT 2
+
 struct GLFWwindow;
 
 namespace ec {
 
-	struct QuadRendererCreateInfo {
+	struct VulkanQuadRendererCreateInfo {
 
 		VulkanWindow* window;
 
@@ -39,7 +41,7 @@ namespace ec {
 
 		VkCommandBuffer commandBuffer;
 		VkCommandPool commandPool;
-		uint32_t imageIndex;
+
 		VulkanPipeline pipeline;
 		VulkanRenderpass renderpass;
 		std::vector<VulkanFramebuffer> framebuffers;
@@ -71,7 +73,7 @@ namespace ec {
 		VulkanQuadRenderer(const VulkanQuadRenderer&&) = delete;
 		VulkanQuadRenderer& operator=(const VulkanQuadRenderer&&) = delete;
 
-		void create(VulkanContext& context, QuadRendererCreateInfo& createInfo);
+		void create(VulkanContext& context, VulkanQuadRendererCreateInfo& createInfo);
 		void destroy(VulkanContext& context);
 
 		void beginFrame(VulkanContext& context, VulkanWindow& window);
@@ -79,9 +81,74 @@ namespace ec {
 
 		VkCommandBuffer endFrame(VulkanContext& context);
 
+		const VulkanQuadRendererData& getData() const;
+
 	private:
 
 		VulkanQuadRendererData m_data;
+
+	};
+
+	struct VulkanBezierRendererCreateInfo {
+
+		VulkanWindow* window;
+
+	};
+
+	struct VulkanBezierRendererData {
+
+		VulkanRenderpass renderpass;
+		VkCommandBuffer commandBuffer;
+		VkCommandPool commandPool;
+		VulkanPipeline pipeline;
+		std::vector<VulkanFramebuffer> framebuffers;
+		VulkanBuffer vertexBuffer;
+		VulkanBuffer indexBuffer;
+		const uint32_t MAX_CURVE_COUNT = 1000;
+
+		VulkanBuffer objectDataBuffer;
+		uint32_t quadCount = 0;
+
+		VulkanBuffer globalDataBuffer;
+		VkDescriptorSet globalDataDescriptorSet;
+
+		VkDescriptorPool descriptorPool;
+		QuadRendererState state = QuadRendererState::OUT_OF_FRAME;
+
+	};
+
+	struct BezierUniformBuffer {
+
+		glm::vec4 p1;
+		glm::vec4 p2;
+		glm::vec4 c1;
+		glm::vec4 c2;
+		glm::mat4 transform;
+		glm::vec4 color;
+	};
+
+	struct GlobalBezierUniformBuffer {
+
+		glm::mat4 viewProj;
+		glm::vec2 screenSize;
+
+	};
+
+	class VulkanBezierRenderer {
+
+	public:
+
+		void create(VulkanContext& context, VulkanBezierRendererCreateInfo& createInfo);
+		void destroy(VulkanContext& context);
+
+		void drawCurve(VulkanContext& context, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& c1, const glm::vec3& c2, const glm::vec4& color);
+
+		void beginFrame(VulkanContext& context, VulkanWindow& window);
+		VkCommandBuffer endFrame(VulkanContext& context);
+
+	private:
+
+		VulkanBezierRendererData m_data;
 
 	};
 

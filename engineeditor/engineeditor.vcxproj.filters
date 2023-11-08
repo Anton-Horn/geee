@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="imgui_backend">
+      <UniqueIdentifier>{07217A28-73E1-F55E-3C1C-3FDCA89B3A3B}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\imgui_backend\imgui_impl_glfw.h">
+      <Filter>imgui_backend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui_backend\imgui_impl_vulkan.h">
+      <Filter>imgui_backend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\bezier_spline.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\imgui_backend\imgui_impl_glfw.cpp">
+      <Filter>imgui_backend</Filter>
+    </ClCompile>
+    <ClCompile Include="src\imgui_backend\imgui_impl_vulkan.cpp">
+      <Filter>imgui_backend</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\bezier_spline.cpp" />
+  </ItemGroup>
+</Project>

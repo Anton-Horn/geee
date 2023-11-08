@@ -148,6 +148,7 @@ namespace ec {
 
 	static VkSampleCountFlagBits getSampleCount(uint8_t sampleCount)
 	{
+
 		switch (sampleCount) {
 		case 1: return VK_SAMPLE_COUNT_1_BIT;
 		case 2: return VK_SAMPLE_COUNT_2_BIT;
@@ -199,7 +200,7 @@ namespace ec {
 		return result;
 	}
 
-	static VkSubpassDescription createSubpass(const std::vector<VkAttachmentReference>& colorAttachments, std::optional<VkAttachmentReference> depthStencilAttachment = std::nullopt, const std::vector<VkAttachmentReference>& resolveAttachments = {}, const std::vector<VkAttachmentReference>& inputAttachments = {}) {
+	static VkSubpassDescription createSubpass(std::vector<VkAttachmentReference>& colorAttachments, std::vector<VkAttachmentReference>& resolveAttachments, std::vector<VkAttachmentReference>& inputAttachments, std::optional<VkAttachmentReference> depthStencilAttachment = std::nullopt) {
 
 
 		VkSubpassDescription description = {};

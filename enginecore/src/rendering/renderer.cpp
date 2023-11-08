@@ -4,6 +4,7 @@
 #include "vulkan_impl/vulkan_utils.h"
 #include "stb_image.h"
 
+
 namespace ec {
 
 	struct RendererData {
@@ -11,53 +12,69 @@ namespace ec {
 		VulkanContext context;
 		VulkanWindow window;
 		VulkanSynchronisationController synController;
-		VulkanQuadRenderer renderer;
 
-		VulkanImage image;
+		VulkanQuadRenderer quadRenderer;
+		VulkanBezierRenderer bezierRenderer;
 
 	};
 
-	void Renderer::init(const Window& window) {
+	void Renderer::init(RendererCreateInfo& rendererCreateInfo) {
 	
 		m_data = std::make_unique<RendererData>();
 
+		m_quadRendererDrawCallback = std::move(rendererCreateInfo.quadRendererDrawCallback);
+		m_bezierRendererDrawCallback = std::move(rendererCreateInfo.bezierRendererDrawCallback);
+
 		m_data->context.createDefaultVulkanContext("Sandbox", getInstanceExtensions());
-		m_data->window.surface = getSurface(m_data->context, window);
+		m_data->window.surface = getSurface(m_data->context, *rendererCreateInfo.window);
 		m_data->window.swapchain.create(m_data->context, m_data->window.surface);
-		m_data->window.window = (Window*) &window;
+		m_data->window.window = (Window*)rendererCreateInfo.window;
 
 		m_data->synController.create(m_data->context);
 
-		QuadRendererCreateInfo createInfo;
+		VulkanQuadRendererCreateInfo createInfo;
 		createInfo.window = &m_data->window;
+		m_data->quadRenderer.create(m_data->context, createInfo);
 
-		m_data->renderer.create(m_data->context, createInfo);
+		VulkanBezierRendererCreateInfo bezierRendererCreateInfo;
+		bezierRendererCreateInfo.window = &m_data->window;
+		m_data->bezierRenderer.create(m_data->context, bezierRendererCreateInfo);
 
-		int x, y, channels;
-		uint8_t* data = stbi_load("image.png", &x, &y, &channels, 4);
-
-		m_data->image.create(m_data->context, x, y, VK_FORMAT_R8G8B8A8_UNORM);
-		m_data->image.uploadData(m_data->context, data, x,y, 4);
-
-		stbi_image_free(data);
 
 	}
+
 	void Renderer::draw() {
 
 		m_data->synController.waitAndBeginFrame(m_data->context, m_data->window);
 
-		m_data->renderer.beginFrame(m_data->context, m_data->window);
+		m_data->quadRenderer.beginFrame(m_data->context, m_data->window);
 
-		m_data->renderer.drawQuad(m_data->context, {0.0f, 0.0f, 0.0f}, {300.0f, 300.0f, 1.0f}, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}, m_data->image);
+		m_quadRendererDrawCallback();
 
-		m_data->synController.submitFrameAndPresent(m_data->context, m_data->window, { m_data->renderer.endFrame(m_data->context) });
+		VkCommandBuffer quadRendererCommandBuffer = m_data->quadRenderer.endFrame(m_data->context);
+
+		m_data->bezierRenderer.beginFrame(m_data->context, m_data->window);
+
+		m_bezierRendererDrawCallback();
+
+		VkCommandBuffer bezierRendererCommandBuffer = m_data->bezierRenderer.endFrame(m_data->context);
+		m_data->synController.submitFrameAndPresent(m_data->context, m_data->window, { bezierRendererCommandBuffer, quadRendererCommandBuffer });
 
 	}
 	void Renderer::destroy() {
 
 		m_data->synController.waitDeviceIdle(m_data->context);
+		
+		m_data->quadRenderer.destroy(m_data->context);
 		m_data->context.destroy();
+		
 	}
+
+	void Renderer::drawBezierCurve(const vec3& p1, const vec3& p2, const vec3& c1, const vec3& c2, const vec4& color)
+	{
+		m_data->bezierRenderer.drawCurve(m_data->context, *(glm::vec3*)&p1, *(glm::vec3*)&p2, *(glm::vec3*)&c1, *(glm::vec3*)&c2, *(glm::vec4*)&color);
+	}
+
 
 	Renderer::Renderer()
 	{
@@ -65,6 +82,11 @@ namespace ec {
 
 	Renderer::~Renderer()
 	{
+	}
+
+	const RendererData& Renderer::getData() const
+	{
+		return *m_data;
 	}
 
 }

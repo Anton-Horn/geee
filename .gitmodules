@@ -13,3 +13,7 @@
 [submodule "enginecore/libs/glm"]
 	path = enginecore/libs/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "engineeditor/libs/imgui"]
+	path = engineeditor/libs/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
