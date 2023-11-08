@@ -8,6 +8,7 @@
 *.obj
 *.vcxproj
 *.vcxproj.user
+*.vcxproj.filters
 *.sln
 /.vs
 /bin
