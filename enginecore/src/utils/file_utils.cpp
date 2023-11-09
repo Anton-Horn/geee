@@ -19,4 +19,22 @@ std::vector<uint8_t> ecUtilsReadBinaryFile(const std::filesystem::path& filePath
 
 }
 
+tinygltf::Model loadGltfModel(const std::filesystem::path& filepath)
+{
+	tinygltf::TinyGLTF loader;
+	tinygltf::Model model;
+	std::string err = "";
+	std::string warn = "";
+
+	bool res = loader.LoadASCIIFromFile(&model, &err, &warn, filepath.string());
+
+	if (!err.empty()) EC_ERROR(err.c_str());
+	if (!warn.empty()) EC_ERROR(warn.c_str());
+
+	EC_ASSERT(res);
+
+	return model;
+
+}
+
 

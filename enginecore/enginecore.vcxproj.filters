@@ -40,6 +40,9 @@
     <ClInclude Include="src\rendering\vulkan_impl\vulkan_renderer.h">
       <Filter>rendering\vulkan_impl</Filter>
     </ClInclude>
+    <ClInclude Include="src\rendering\vulkan_impl\vulkan_synchronisation.h">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClInclude>
     <ClInclude Include="src\rendering\vulkan_impl\vulkan_utils.h">
       <Filter>rendering\vulkan_impl</Filter>
     </ClInclude>
@@ -63,34 +66,43 @@
     <ClCompile Include="src\rendering\stb_image.cpp">
       <Filter>rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan_impl\buffer.cpp">
-      <Filter>rendering\vulkan_impl</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rendering\vulkan_impl\context.cpp">
-      <Filter>rendering\vulkan_impl</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rendering\vulkan_impl\framebuffer.cpp">
-      <Filter>rendering\vulkan_impl</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rendering\vulkan_impl\image.cpp">
-      <Filter>rendering\vulkan_impl</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rendering\vulkan_impl\pipeline.cpp">
-      <Filter>rendering\vulkan_impl</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rendering\vulkan_impl\renderpass.cpp">
-      <Filter>rendering\vulkan_impl</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rendering\vulkan_impl\shader.cpp">
-      <Filter>rendering\vulkan_impl</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rendering\vulkan_impl\swapchain.cpp">
-      <Filter>rendering\vulkan_impl</Filter>
-    </ClCompile>
     <ClCompile Include="src\rendering\vulkan_impl\vma_implementation.cpp">
       <Filter>rendering\vulkan_impl</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan_impl\vulkan_quad_renderer.cpp">
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_core_buffer.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_core_context.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_core_framebuffer.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_core_image.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_core_model.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_core_pipeline.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_core_renderpass.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_core_shader.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_core_swapchain.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_renderer_bezier.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_renderer_gooch.cpp">
+      <Filter>rendering\vulkan_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\vulkan_impl\vulkan_renderer_quad.cpp">
       <Filter>rendering\vulkan_impl</Filter>
     </ClCompile>
     <ClCompile Include="src\rendering\vulkan_impl\vulkan_synchronisation.cpp">
@@ -99,6 +111,5 @@
     <ClCompile Include="src\utils\file_utils.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\vulkan_impl\vulkan_bezier_renderer.cpp" />
   </ItemGroup>
 </Project>

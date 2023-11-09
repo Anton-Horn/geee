@@ -34,7 +34,7 @@ project "enginecore"
         IncludeDirs["Vulkan"],
         IncludeDirs["vma"],
         IncludeDirs["spirv-reflect"],
-        IncludeDirs["glm"]
+        IncludeDirs["glm"],
     }
 
     libdirs {

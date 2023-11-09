@@ -152,22 +152,32 @@ namespace ec {
 
 	};
 
-	class VulkanSynchronisationController {
+	struct VulkanGoochRendererData {
+
+		VulkanRenderpass renderpass;
+		VulkanPipeline pipeline;
+
+		VkCommandBuffer commandBuffer;
+		VkCommandPool commandPool;
+
+	};
+
+	struct VulkanGoochRendererCreateInfo {
+
+		VulkanWindow* window;
+
+	};
+
+	class VulkanGoochRenderer {
 
 	public:
 
-		void create(VulkanContext& context);
-		void destroy(VulkanContext& context);
-
-		void waitAndBeginFrame(VulkanContext& context, VulkanWindow& window);
-		void submitFrameAndPresent(VulkanContext& context, VulkanWindow& window, const std::vector<VkCommandBuffer>& data);
-		void waitDeviceIdle(VulkanContext& context);
+		void create(VulkanGoochRendererCreateInfo& createInfo);
+		void destroy();
 
 	private:
-		
-		VkFence m_fence;
-		VkSemaphore m_aquireSemaphore;
-		VkSemaphore m_submitSemaphore;
+
+		VulkanGoochRendererData m_data;
 
 	};
 

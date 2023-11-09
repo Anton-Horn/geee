@@ -1,6 +1,4 @@
-#include <vulkan/vulkan.h>
-
-#include "vulkan_renderer.h"
+#include "vulkan_synchronisation.h"
 #include "vulkan_utils.h"
 
 

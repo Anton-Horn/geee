@@ -1,6 +1,7 @@
 #include "renderer.h"
 
 #include "vulkan_impl/vulkan_renderer.h"
+#include "vulkan_impl/vulkan_synchronisation.h"
 #include "vulkan_impl/vulkan_utils.h"
 #include "stb_image.h"
 

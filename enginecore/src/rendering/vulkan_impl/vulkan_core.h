@@ -297,6 +297,21 @@ namespace ec {
 
 	};
 
+	struct VulkanModelCreateInfo {
+
+		std::filesystem::path filepath;
+
+	};
+
+	class VulkanModel {
+
+	public:
+
+		void create(VulkanModelCreateInfo& createInfo);
+		void destroy();
+
+	};
+
 
 }
 

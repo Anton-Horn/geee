@@ -6,15 +6,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\bezier_spline.h" />
     <ClInclude Include="src\imgui_backend\imgui_impl_glfw.h">
       <Filter>imgui_backend</Filter>
     </ClInclude>
     <ClInclude Include="src\imgui_backend\imgui_impl_vulkan.h">
       <Filter>imgui_backend</Filter>
     </ClInclude>
-    <ClInclude Include="src\bezier_spline.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\bezier_spline.cpp" />
     <ClCompile Include="src\imgui_backend\imgui_impl_glfw.cpp">
       <Filter>imgui_backend</Filter>
     </ClCompile>
@@ -22,6 +23,5 @@
       <Filter>imgui_backend</Filter>
     </ClCompile>
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\bezier_spline.cpp" />
   </ItemGroup>
 </Project>
