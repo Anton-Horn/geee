@@ -37,26 +37,28 @@ namespace ec {
 
 		const uint32_t MAX_QUAD_COUNT = 1000;
 
-		VkSampler sampler;
-
 		VkCommandBuffer commandBuffer;
 		VkCommandPool commandPool;
 
-		VulkanPipeline pipeline;
 		VulkanRenderpass renderpass;
 		std::vector<VulkanFramebuffer> framebuffers;
 		VulkanBuffer vertexBuffer;
 		VulkanBuffer indexBuffer;
 
-		VulkanBuffer objectDataBuffer;
-		uint32_t quadCount = 0;
-
-		VulkanBuffer globalDataBuffer;
-		VkDescriptorSet globalDataDescriptorSet;
+		QuadRendererState state = QuadRendererState::OUT_OF_FRAME;
 
 		VkDescriptorPool descriptorPool;
 
-		QuadRendererState state = QuadRendererState::OUT_OF_FRAME;
+		//textured quad
+		VkSampler sampler;
+
+		VulkanPipeline texturedQuadPipeline;
+		UniformBuffer<QuadUniformBuffer> texturedQuadObjectUniformBuffer;
+
+		UniformBuffer<glm::mat4> texturedQuadGlobalUniformBuffer;
+		VkDescriptorSet texturedQuadGlobalDataDescriptorSet;
+
+		uint32_t texturedQuadCount = 0;
 
 	};
 
@@ -76,9 +78,10 @@ namespace ec {
 		void create(VulkanContext& context, VulkanQuadRendererCreateInfo& createInfo);
 		void destroy(VulkanContext& context);
 
-		void beginFrame(VulkanContext& context, VulkanWindow& window);
-		void drawQuad(VulkanContext& context, const glm::vec3& position, const glm::vec3& scale, float angle, const glm::vec4& color, VulkanImage& image, const glm::vec2& srcPos = { 0.0f, 0.0f }, const glm::vec2& srcSize = { 0.0f, 0.0f });
+		void beginFrame(VulkanContext& context);
 
+		void drawTexturedQuad(VulkanContext& context, const glm::vec3& position, const glm::vec3& scale, float angle, const glm::vec4& color, VulkanImage& image);
+	
 		VkCommandBuffer endFrame(VulkanContext& context);
 
 		const VulkanQuadRendererData& getData() const;
@@ -86,12 +89,32 @@ namespace ec {
 	private:
 
 		VulkanQuadRendererData m_data;
+		VulkanWindow* m_window;
 
 	};
 
 	struct VulkanBezierRendererCreateInfo {
 
 		VulkanWindow* window;
+
+	};
+
+
+	struct BezierUniformBuffer {
+
+		glm::vec4 p1;
+		glm::vec4 p2;
+		glm::vec4 c1;
+		glm::vec4 c2;
+		glm::mat4 transform;
+		glm::vec4 color;
+	};
+
+
+	struct GlobalBezierUniformBuffer {
+
+		glm::mat4 viewProj;
+		glm::vec2 screenSize;
 
 	};
 
@@ -106,10 +129,10 @@ namespace ec {
 		VulkanBuffer indexBuffer;
 		const uint32_t MAX_CURVE_COUNT = 1000;
 
-		VulkanBuffer objectDataBuffer;
+		UniformBuffer<BezierUniformBuffer> objectUniformBuffer;
 		uint32_t quadCount = 0;
 
-		VulkanBuffer globalDataBuffer;
+		UniformBuffer<GlobalBezierUniformBuffer> globalUniformBuffer;
 		VkDescriptorSet globalDataDescriptorSet;
 
 		VkDescriptorPool descriptorPool;
@@ -117,38 +140,60 @@ namespace ec {
 
 	};
 
-	struct BezierUniformBuffer {
-
-		glm::vec4 p1;
-		glm::vec4 p2;
-		glm::vec4 c1;
-		glm::vec4 c2;
-		glm::mat4 transform;
-		glm::vec4 color;
-	};
-
-	struct GlobalBezierUniformBuffer {
-
-		glm::mat4 viewProj;
-		glm::vec2 screenSize;
-
-	};
-
 	class VulkanBezierRenderer {
 
 	public:
+
+		VulkanBezierRenderer() = default;
+		~VulkanBezierRenderer() = default;
+
+		VulkanBezierRenderer(const VulkanBezierRenderer&) = delete;
+		VulkanBezierRenderer& operator=(const VulkanBezierRenderer&) = delete;
+
+		VulkanBezierRenderer(const VulkanBezierRenderer&&) = delete;
+		VulkanBezierRenderer& operator=(const VulkanBezierRenderer&&) = delete;
 
 		void create(VulkanContext& context, VulkanBezierRendererCreateInfo& createInfo);
 		void destroy(VulkanContext& context);
 
 		void drawCurve(VulkanContext& context, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& c1, const glm::vec3& c2, const glm::vec4& color);
 
-		void beginFrame(VulkanContext& context, VulkanWindow& window);
+		void beginFrame(VulkanContext& context);
 		VkCommandBuffer endFrame(VulkanContext& context);
 
 	private:
 
+		VulkanWindow* m_window;
 		VulkanBezierRendererData m_data;
+
+	};
+
+	enum class GoochRendererState {
+
+		IN_FRAME,
+		OUT_OF_FRAME
+
+	};
+
+	struct GoochRendererUniformBuffer {
+
+		glm::mat4 modelTransform;
+
+	};
+
+	struct Camera {
+
+		glm::mat4 viewTransform;
+		glm::mat4 projection;
+
+	};
+
+	struct GlobalGoochRendererUniformBuffer {
+
+		glm::mat4 proj;
+		glm::mat4 view;
+		glm::vec4 cameraPosition;
+		glm::vec4 lightPosition;
 
 	};
 
@@ -159,6 +204,23 @@ namespace ec {
 
 		VkCommandBuffer commandBuffer;
 		VkCommandPool commandPool;
+		VkSampler sampler;
+		std::vector<VulkanFramebuffer> framebuffers;
+		std::vector<VulkanImage> depthImages;
+
+		UniformBuffer<QuadUniformBuffer> objectUniformBuffer;
+		uint32_t modelCount = 0;
+
+		UniformBuffer<GlobalGoochRendererUniformBuffer> globalUniformBuffer;
+		VkDescriptorSet globalDataDescriptorSet;
+
+		VkDescriptorPool descriptorPool;
+		GoochRendererState state = GoochRendererState::OUT_OF_FRAME;
+
+		const uint32_t MAX_MESHES_COUNT = 1000;
+
+		Camera camera;
+		glm::vec3 lightPosition;
 
 	};
 
@@ -172,12 +234,77 @@ namespace ec {
 
 	public:
 
-		void create(VulkanGoochRendererCreateInfo& createInfo);
-		void destroy();
+		VulkanGoochRenderer() = default;
+		~VulkanGoochRenderer() = default;
+
+		VulkanGoochRenderer(const VulkanGoochRenderer&) = delete;
+		VulkanGoochRenderer& operator=(const VulkanGoochRenderer&) = delete;
+		
+		VulkanGoochRenderer(const VulkanGoochRenderer&&) = delete;
+		VulkanGoochRenderer& operator=(const VulkanGoochRenderer&&) = delete;
+
+		void create(VulkanContext& context, VulkanGoochRendererCreateInfo& createInfo);
+		void destroy(VulkanContext& context);
+
+		void beginFrame(VulkanContext& context);
+		VkCommandBuffer endFrame(VulkanContext& context);
+
+		void drawModel(VulkanContext& context,const VulkanModel& model,const glm::mat4& modelTransform);
 
 	private:
 
+		VulkanWindow* m_window;
 		VulkanGoochRendererData m_data;
+
+	};
+
+	struct MandelbrotQuadUniformBuffer {
+
+		glm::mat4 viewProj;
+		glm::mat4 transform;
+		glm::vec4 spec;
+
+	};
+
+	struct VulkanMandelbrotRendererData {
+
+		VkCommandBuffer commandBuffer;
+		VkCommandPool commandPool;
+
+		VulkanRenderpass renderpass;
+		std::vector<VulkanFramebuffer> framebuffers;
+		VulkanBuffer vertexBuffer;
+		VulkanBuffer indexBuffer;
+
+		VulkanPipeline pipeline;
+
+		UniformBuffer<MandelbrotQuadUniformBuffer> uniformBuffer;
+		VkDescriptorSet descriptorSet;
+
+	};
+
+	class VulkanMandelbrotRenderer {
+
+	public:
+
+		VulkanMandelbrotRenderer() = default;
+		~VulkanMandelbrotRenderer() = default;
+
+		VulkanMandelbrotRenderer(const VulkanMandelbrotRenderer&) = delete;
+		VulkanMandelbrotRenderer& operator=(const VulkanMandelbrotRenderer&) = delete;
+
+		VulkanMandelbrotRenderer(const VulkanMandelbrotRenderer&&) = delete;
+		VulkanMandelbrotRenderer& operator=(const VulkanMandelbrotRenderer&&) = delete;
+
+		void create(VulkanContext& context, VulkanWindow* window);
+		void destroy(VulkanContext& context);
+
+		VkCommandBuffer drawMandelbrot(VulkanContext& context,const glm::mat4& transform, const glm::vec2& cstart, float zoom, float iterations);
+
+	private:
+
+		VulkanWindow* m_window;
+		VulkanMandelbrotRendererData m_data;
 
 	};
 

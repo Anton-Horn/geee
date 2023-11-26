@@ -2,7 +2,6 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 #include <glm/glm.hpp>
-#include <GLFW/glfw3.h>
 
 #include "core/core.h"
 
@@ -79,7 +78,7 @@ namespace ec {
 		void destroy(VulkanContext& context);
 
 		void uploadData(VulkanContext& context, void* data, uint32_t size, uint32_t offset = 0);
-		uint64_t getSize(VulkanContext& context);
+		uint64_t getSize(VulkanContext& context) const;
 		const VkBuffer getBuffer() const;
 
 	private:
@@ -87,6 +86,29 @@ namespace ec {
 		VkBuffer m_buffer;
 		VmaAllocation m_allocation;
 		VkBufferUsageFlags m_usage;
+
+	};
+
+	// The Uniform buffer needs to be at binding 0
+	template<typename T>
+	struct UniformBuffer {
+
+	public:
+		
+		void create(VulkanContext& context, MemoryType type = MemoryType::Auto, uint32_t count = 1) {
+
+			alignedSize = alignToPow2(context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(T));
+			buffer.create(context, alignedSize * count, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, type);
+		}
+
+		void destroy(VulkanContext& context) {
+
+			buffer.destroy(context);
+
+		}
+
+		VulkanBuffer buffer;
+		uint32_t alignedSize = 0;
 
 	};
 
@@ -138,10 +160,10 @@ namespace ec {
 		VulkanSwapchain& operator=(const VulkanSwapchain&&) = delete;
 
 		void create(VulkanContext& VulkanContext, VkSurfaceKHR surface);
-		void reCreate(VulkanContext& VulkanContext, VkSurfaceKHR surface);
+		void recreate(VulkanContext& VulkanContext, VkSurfaceKHR surface);
 		void destroy(VulkanContext& VulkanContext);
 
-		void aquireNextImage(VulkanContext& VulkanContext, VkSemaphore signalSemaphore);
+		VkResult aquireNextImage(VulkanContext& VulkanContext, VkSemaphore signalSemaphore);
 
 		uint32_t getWidth() const;
 		uint32_t getHeight() const;
@@ -297,9 +319,40 @@ namespace ec {
 
 	};
 
+	enum class VulkanModelSourceFormat {
+
+		GLTF,
+		OBJ
+
+	};
+
 	struct VulkanModelCreateInfo {
 
 		std::filesystem::path filepath;
+		VulkanModelSourceFormat sourceFormat;
+
+	};
+
+	struct VulkanModelVertex {
+	
+		glm::vec3 position;
+		glm::vec3 normal;
+		glm::vec2 uv;
+	
+	};
+
+	struct VulkanMesh {
+
+		VulkanBuffer vertexBuffer;
+		VulkanBuffer indexBuffer;
+		uint32_t vertexCount;
+		uint32_t indexCount;
+
+	};
+
+	struct VulkanMaterial {
+
+		VulkanImage albedo;
 
 	};
 
@@ -307,8 +360,18 @@ namespace ec {
 
 	public:
 
-		void create(VulkanModelCreateInfo& createInfo);
-		void destroy();
+		void create(VulkanContext& context, VulkanModelCreateInfo& createInfo);
+		void destroy(VulkanContext& context);
+
+		const VulkanMaterial& getMat() const;
+		const VulkanMesh& getMesh() const;
+
+	private:
+
+		void fillBuffer(uint8_t const* inputBuffer, uint8_t* outputBuffer, uint32_t inputStride, uint32_t outputStride, uint32_t count, uint32_t elementSize);
+
+		VulkanMaterial m_mat;
+		VulkanMesh m_mesh;
 
 	};
 

@@ -121,7 +121,7 @@ namespace ec {
 		}
 	}
 
-	uint64_t VulkanBuffer::getSize(VulkanContext& context)
+	uint64_t VulkanBuffer::getSize(VulkanContext& context) const
 	{
 
 		VmaAllocationInfo allocationInfo;

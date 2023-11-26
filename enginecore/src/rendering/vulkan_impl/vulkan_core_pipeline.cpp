@@ -3,7 +3,7 @@
 #include "vulkan_utils.h"
 
 namespace ec {
-
+	int count = 0;
 	void VulkanPipeline::create(VulkanContext& context, VulkanPipelineCreateInfo& createInfo) {
 
 		VkPipelineShaderStageCreateInfo shaderStages[2];
@@ -33,7 +33,7 @@ namespace ec {
 		VkPipelineVertexInputStateCreateInfo vertexInputState = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
 		vertexInputState.vertexBindingDescriptionCount = createInfo.vertexLayout.size() ? 1 : 0;
 		vertexInputState.pVertexBindingDescriptions = &binding;
-		vertexInputState.vertexAttributeDescriptionCount = vertexAttributes.size();
+		vertexInputState.vertexAttributeDescriptionCount = (uint32_t)vertexAttributes.size();
 		vertexInputState.pVertexAttributeDescriptions = vertexAttributes.data();
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
@@ -52,7 +52,7 @@ namespace ec {
 		VkPipelineDepthStencilStateCreateInfo depthStencilState = { VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
 		depthStencilState.depthTestEnable = createInfo.depthTestEnabled ? VK_TRUE : VK_FALSE;
 		depthStencilState.depthWriteEnable = createInfo.depthTestEnabled ? VK_TRUE : VK_FALSE;
-		depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+		depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 		depthStencilState.minDepthBounds = 0.0f;
 		depthStencilState.maxDepthBounds = 1.0f;
 
@@ -78,7 +78,7 @@ namespace ec {
 
 		VkPipelineLayoutCreateInfo layoutCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
 
-		layoutCreateInfo.setLayoutCount = m_shaders.getLayouts().size();
+		layoutCreateInfo.setLayoutCount = (uint32_t)m_shaders.getLayouts().size();
 		layoutCreateInfo.pSetLayouts = m_shaders.getLayouts().data();
 
 		vkCreatePipelineLayout(context.getData().device, &layoutCreateInfo, nullptr, &m_pipelineLayout);
@@ -102,6 +102,8 @@ namespace ec {
 		vkCreateGraphicsPipelines(context.getData().device, 0, 1, &pipelineCreateInfo, nullptr, &m_pipeline);
 
 	}
+
+	
 
 	void VulkanPipeline::destroy(VulkanContext& context)
 	{

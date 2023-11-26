@@ -11,9 +11,9 @@ namespace ec {
 		void create(VulkanContext& context);
 		void destroy(VulkanContext& context);
 
-		void waitAndBeginFrame(VulkanContext& context, VulkanWindow& window);
-		void submitFrameAndPresent(VulkanContext& context, VulkanWindow& window, const std::vector<VkCommandBuffer>& data);
-		void waitDeviceIdle(VulkanContext& context);
+		void waitAndBeginFrame(VulkanContext& context, VulkanWindow& window, bool& recreateSwapchain);
+		void submitFrameAndPresent(VulkanContext& context, VulkanWindow& window, const std::vector<VkCommandBuffer>& data, bool& recreateSwapchain);
+		void waitDeviceIdle(const VulkanContext& context) const;
 
 	private:
 

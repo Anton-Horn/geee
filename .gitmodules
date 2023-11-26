@@ -17,3 +17,9 @@
 	path = engineeditor/libs/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
+[submodule "gameengine/libs/cgltf"]
+	path = gameengine/libs/cgltf
+	url = https://github.com/jkuhlmann/cgltf.git
+[submodule "enginecore/libs/cgltf"]
+	path = enginecore/libs/cgltf
+	url = https://github.com/jkuhlmann/cgltf.git

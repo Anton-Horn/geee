@@ -18,6 +18,8 @@ namespace ec {
 			createInfo.updateCallback();
 		}
 
+		createInfo.terminateCallback();
+
 		m_window.terminate();
 
 		Log::terminate();

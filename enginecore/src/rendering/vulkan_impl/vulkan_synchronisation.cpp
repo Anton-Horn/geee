@@ -22,7 +22,7 @@ namespace ec {
 	}
 
 
-	void VulkanSynchronisationController::waitAndBeginFrame(VulkanContext& context, VulkanWindow& window) {
+	void VulkanSynchronisationController::waitAndBeginFrame(VulkanContext& context, VulkanWindow& window, bool& recreateSwapchain) {
 
 		uint32_t imageIndex = 0;
 
@@ -30,14 +30,21 @@ namespace ec {
 
 		VKA(vkResetFences(context.getData().device, 1, &m_fence));
 
-		window.swapchain.aquireNextImage(context, m_aquireSemaphore);
+		VkResult r = window.swapchain.aquireNextImage(context, m_aquireSemaphore);
+		if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
+			recreateSwapchain = true;
+		}
+		else {
+			VKA(r);
+			recreateSwapchain = false;
+		}
 
 	}
 
-	void VulkanSynchronisationController::submitFrameAndPresent(VulkanContext& context, VulkanWindow& window, const std::vector<VkCommandBuffer>& data) {
+	void VulkanSynchronisationController::submitFrameAndPresent(VulkanContext& context, VulkanWindow& window, const std::vector<VkCommandBuffer>& data, bool& recreateSwapchain) {
 
 		VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
-		submitInfo.commandBufferCount = data.size();
+		submitInfo.commandBufferCount = (uint32_t)data.size();
 		submitInfo.pCommandBuffers = data.data();
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = &m_aquireSemaphore;
@@ -61,11 +68,18 @@ namespace ec {
 
 		presentInfo.pImageIndices = &currentIndex;
 
-		VKA(vkQueuePresentKHR(context.getData().queue, &presentInfo));
+		VkResult r = vkQueuePresentKHR(context.getData().queue, &presentInfo);
+		if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
+			recreateSwapchain = true;
+		}
+		else {
+			VKA(r);
+			recreateSwapchain = false;
+		}
 
 	}
 
-	void VulkanSynchronisationController::waitDeviceIdle(VulkanContext& context) {
+	void VulkanSynchronisationController::waitDeviceIdle(const VulkanContext& context) const {
 
 		vkDeviceWaitIdle(context.getData().device);
 

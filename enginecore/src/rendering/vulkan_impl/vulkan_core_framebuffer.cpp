@@ -17,7 +17,7 @@ namespace ec {
 		createInfo.width = images[0]->getWidth();
 		createInfo.height = images[0]->getHeight();
 		createInfo.renderPass = renderpass.getRenderpass();
-		createInfo.attachmentCount = imageViews.size();
+		createInfo.attachmentCount = (uint32_t) imageViews.size();
 		createInfo.pAttachments = imageViews.data();
 		createInfo.layers = 1;
 

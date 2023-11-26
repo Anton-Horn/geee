@@ -91,7 +91,7 @@ namespace ec {
 
 	}
 
-	void VulkanSwapchain::reCreate(VulkanContext& context, VkSurfaceKHR surface) {
+	void VulkanSwapchain::recreate(VulkanContext& context, VkSurfaceKHR surface) {
 
 		destroy(context);
 		create(context, surface);
@@ -107,9 +107,9 @@ namespace ec {
 		vkDestroySwapchainKHR(context.getData().device, m_swapchain, nullptr);
 	}
 
-	void VulkanSwapchain::aquireNextImage(VulkanContext& context, VkSemaphore signalSemaphore)
+	VkResult VulkanSwapchain::aquireNextImage(VulkanContext& context, VkSemaphore signalSemaphore)
 	{
-		VKA(vkAcquireNextImageKHR(context.getData().device, m_swapchain, UINT64_MAX, signalSemaphore, 0, &m_currentSwapchainImageIndex));
+		return vkAcquireNextImageKHR(context.getData().device, m_swapchain, UINT64_MAX, signalSemaphore, 0, &m_currentSwapchainImageIndex);
 	}
 
 	uint32_t VulkanSwapchain::getWidth() const

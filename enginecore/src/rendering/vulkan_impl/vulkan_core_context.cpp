@@ -229,6 +229,11 @@ namespace ec {
 
 	void VulkanContext::destroy() {
 
+		PFN_vkDestroyDebugUtilsMessengerEXT pfnDestroyDebugUtilsMessengerExt;
+		pfnDestroyDebugUtilsMessengerExt = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_data.instance, "vkDestroyDebugUtilsMessengerEXT");
+		
+		pfnDestroyDebugUtilsMessengerExt(m_data.instance, m_data.debugCallback, nullptr);
+		vkDestroyDescriptorPool(m_data.device, m_data.generalDescriptorPool, nullptr);
 		vmaDestroyAllocator(m_data.allocator);
 		vkDestroyDevice(m_data.device, nullptr);
 		vkDestroyInstance(m_data.instance, nullptr);

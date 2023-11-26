@@ -6,14 +6,13 @@ struct GLFWwindow;
 
 namespace ec {
 
-	
-
-	struct Application;
+	class Application;
 
 	struct ApplicationCreateInfo {
 
 		std::function<void(Application&)> createCallback;
 		std::function<void()> updateCallback;
+		std::function<void()> terminateCallback;
 		WindowCreateInfo windowCreateInfo;
 
 	};

@@ -1,0 +1,25 @@
+DONE:
+- resizing
+- delete vulkan objects
+- fix all warnings!
+- Create Uniformbuffer/Dynamic Uniform Buffer class
+- create gooch renderer/lighting
+- render Mandelbrot set
+
+CURRENT:
+- refactor quad renderer
+
+TODO:
+- destroy vulkan objects 
+- fix vertex data
+- merge quad and bezier renderer
+- refactor Framebuffers
+- basic shader/material system, pipeline refactor
+- add entt
+- implement basic renderer/application multithreading
+- refactor renderer data
+- Implement gltf model loading 2.0: create Model Importer
+
+RECOURCES:
+
+https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html

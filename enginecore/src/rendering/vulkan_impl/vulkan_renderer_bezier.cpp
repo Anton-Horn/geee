@@ -9,7 +9,7 @@ namespace ec {
 	void VulkanBezierRenderer::create(VulkanContext& context, VulkanBezierRendererCreateInfo& createInfo)
 	{
 
-
+		m_window = createInfo.window;
 		VkAttachmentDescription colorAttachment = createAttachment(1, createInfo.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
 		std::vector<VkAttachmentReference> colorAttachmentReferences = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
 		std::vector<VkAttachmentReference> resolveAttachments = {};
@@ -17,9 +17,6 @@ namespace ec {
 		VkSubpassDescription subpassDescription = createSubpass(colorAttachmentReferences, resolveAttachments, inputAttachments);
 
 		m_data.renderpass.create(context, { colorAttachment }, { subpassDescription });
-
-		//VkAttachmentDescription colorAttachment = createAttachment(1, createInfo.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
-		//m_data.renderpass.create(context, { colorAttachment }, { createSubpass({{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}}) });
 
 		VulkanPipelineCreateInfo pipelineCreateInfo;
 		pipelineCreateInfo.depthTestEnabled = false;
@@ -55,19 +52,18 @@ namespace ec {
 		m_data.indexBuffer.create(context, sizeof(indexData), VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, MemoryType::Auto);
 		m_data.indexBuffer.uploadData(context, indexData, sizeof(indexData), 0);
 
-		m_data.objectDataBuffer.create(context, alignToPow2(context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(BezierUniformBuffer)) * m_data.MAX_CURVE_COUNT, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, MemoryType::Host_local);
-
 		m_data.descriptorPool = createDesciptorPool(context, m_data.MAX_CURVE_COUNT, { {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, m_data.MAX_CURVE_COUNT} });
 
-		m_data.globalDataBuffer.create(context, alignToPow2(context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(GlobalBezierUniformBuffer)), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, MemoryType::Host_local);
+		m_data.objectUniformBuffer.create(context, MemoryType::Host_local, m_data.MAX_CURVE_COUNT);
+		m_data.globalUniformBuffer.create(context, MemoryType::Device_local);
 		
 		GlobalBezierUniformBuffer uniformBuffer;
 		uniformBuffer.screenSize = { createInfo.window->swapchain.getWidth(), createInfo.window->swapchain.getHeight()};
 		uniformBuffer.viewProj = glm::ortho(createInfo.window->swapchain.getWidth() / -2.0f, createInfo.window->swapchain.getWidth() / 2.0f, createInfo.window->swapchain.getHeight() / 2.0f, createInfo.window->swapchain.getHeight() / -2.0f, 1000.0f, -1000.0f);
-		//glm::mat4 proj = glm::ortho(0.0f, 1280.0f, 720.0f, 0.0f);
-		m_data.globalDataBuffer.uploadData(context, &uniformBuffer, sizeof(GlobalBezierUniformBuffer), 0);
+		
+		m_data.globalUniformBuffer.buffer.uploadData(context, &uniformBuffer, sizeof(GlobalBezierUniformBuffer), 0);
 		m_data.globalDataDescriptorSet = allocateDescriptorSet(context, context.getData().generalDescriptorPool, m_data.pipeline.getShaders().getLayouts()[0]);
-		writeDescriptorUniformBuffer(context, m_data.globalDataDescriptorSet, 0, m_data.globalDataBuffer);
+		writeDescriptorUniformBuffer(context, m_data.globalDataDescriptorSet, 0, m_data.globalUniformBuffer.buffer);
 
 	}
 
@@ -80,12 +76,16 @@ namespace ec {
 		m_data.renderpass.destroy(context);
 		m_data.pipeline.destroy(context);
 		vkDestroyCommandPool(context.getData().device, m_data.commandPool, nullptr);
+
 		m_data.vertexBuffer.destroy(context);
 		m_data.indexBuffer.destroy(context);
-
+		vkDestroyDescriptorPool(context.getData().device, m_data.descriptorPool, nullptr);
+		m_data.globalUniformBuffer.destroy(context);
+		m_data.objectUniformBuffer.destroy(context);
+		
 	}
 
-	void VulkanBezierRenderer::beginFrame(VulkanContext& context, VulkanWindow& window)
+	void VulkanBezierRenderer::beginFrame(VulkanContext& context)
 	{
 		EC_ASSERT(m_data.state == QuadRendererState::OUT_OF_FRAME);
 		VKA(vkResetDescriptorPool(context.getData().device, m_data.descriptorPool, 0));
@@ -99,8 +99,8 @@ namespace ec {
 
 		VkRenderPassBeginInfo renderpassBeginInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 		renderpassBeginInfo.renderPass = m_data.renderpass.getRenderpass();
-		renderpassBeginInfo.framebuffer = m_data.framebuffers[window.swapchain.getCurrentIndex()].getFramebuffer();
-		renderpassBeginInfo.renderArea = { 0,0, window.swapchain.getWidth(), window.swapchain.getHeight() };
+		renderpassBeginInfo.framebuffer = m_data.framebuffers[m_window->swapchain.getCurrentIndex()].getFramebuffer();
+		renderpassBeginInfo.renderArea = { 0,0, m_window->swapchain.getWidth(), m_window->swapchain.getHeight() };
 		renderpassBeginInfo.clearValueCount = 1;
 		VkClearValue clearValue = { 0.1f, 0.1f, 0.102f, 1.0f };
 		renderpassBeginInfo.pClearValues = &clearValue;
@@ -111,8 +111,8 @@ namespace ec {
 
 		vkCmdBindDescriptorSets(m_data.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_data.pipeline.getLayout(), 0, 1, &m_data.globalDataDescriptorSet, 0, nullptr);
 
-		VkViewport viewport = { 0.0f, 0.0f, (float)window.swapchain.getWidth(), (float)window.swapchain.getHeight(), 0.0f, 1.0f };
-		VkRect2D scissor = { {0,0}, {window.swapchain.getWidth(), window.swapchain.getHeight()} };
+		VkViewport viewport = { 0.0f, 0.0f, (float)m_window->swapchain.getWidth(), (float)m_window->swapchain.getHeight(), 0.0f, 1.0f };
+		VkRect2D scissor = { {0,0}, {m_window->swapchain.getWidth(), m_window->swapchain.getHeight()} };
 
 		vkCmdSetViewport(m_data.commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(m_data.commandBuffer, 0, 1, &scissor);
@@ -170,12 +170,12 @@ namespace ec {
 
 		VkDescriptorSet descriptorSet = allocateDescriptorSet(context, m_data.descriptorPool, m_data.pipeline.getShaders().getLayouts()[1]);
 
-		uint32_t alignedSize = alignToPow2(context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(BezierUniformBuffer));
+		uint32_t alignedSize = alignToPow2((uint32_t)context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(BezierUniformBuffer));
 		uint32_t offset = m_data.quadCount * alignedSize;
 
-		m_data.objectDataBuffer.uploadData(context, &uniformBuffer, sizeof(BezierUniformBuffer), offset);
+		m_data.objectUniformBuffer.buffer.uploadData(context, &uniformBuffer, sizeof(BezierUniformBuffer), offset);
 
-		writeDescriptorUniformBuffer(context, descriptorSet, 0, m_data.objectDataBuffer, true, 0, alignedSize);
+		writeDescriptorUniformBuffer(context, descriptorSet, 0, m_data.objectUniformBuffer.buffer, true, 0, alignedSize);
 
 		vkCmdBindDescriptorSets(m_data.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_data.pipeline.getLayout(), 1, 1, &descriptorSet, 1, &offset);
 		vkCmdDrawIndexed(m_data.commandBuffer, 6, 1, 0, m_data.quadCount * 4, 0);

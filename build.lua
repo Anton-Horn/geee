@@ -11,6 +11,7 @@ workspace "gameengine"
     IncludeDirs["vma"] = "enginecore/libs/vma/include"
     IncludeDirs["glm"] = "enginecore/libs/glm"
     IncludeDirs["spirv-reflect"] = "enginecore/libs/spirv-reflect"
+    IncludeDirs["cgltf"] = "enginecore/libs/cgltf"
     Library = {}
     Library["Vulkan"] = "%{VULKAN_SDK}/Lib"
 
@@ -35,6 +36,7 @@ project "enginecore"
         IncludeDirs["vma"],
         IncludeDirs["spirv-reflect"],
         IncludeDirs["glm"],
+        IncludeDirs["cgltf"]
     }
 
     libdirs {
@@ -46,6 +48,8 @@ project "enginecore"
         "spirv-reflect",
         "vulkan-1.lib"
     }
+
+    defines {"_CRT_SECURE_NO_WARNINGS"}
 
     filter "configurations:Debug"
     defines { "DEBUG"}  
@@ -83,6 +87,9 @@ project "engineeditor"
         "enginecore",
         "imgui"
     }
+
+    defines {"_CRT_SECURE_NO_WARNINGS"}
+    ignoredefaultlibraries { "LIBCMTD" }
 
     filter "configurations:Debug"
     defines { "DEBUG" }  

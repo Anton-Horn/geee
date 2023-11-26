@@ -16,13 +16,34 @@ namespace ec {
 
 	};
 
+	struct MandelbrotSpec {
+
+		float csX;
+		float csY;
+		float iterations;
+		float zoom;
+
+	};
+
 	struct RendererData;
+
+	struct RendererCallbacks {
+
+		std::optional<std::function<void()>> drawCallback;
+
+		std::optional<std::function<void()>> recreateCallback;
+
+		std::optional<std::function<void()>> goochRendererDrawCallback;
+		std::optional<std::function<void()>> quadRendererDrawCallback;
+		std::optional<std::function<void()>> bezierRendererDrawCallback;
+
+	};
 
 	struct RendererCreateInfo {
 
 		const Window* window;
-		std::function<void()> quadRendererDrawCallback;
-		std::function<void()> bezierRendererDrawCallback;
+		RendererCallbacks callbacks;
+		
 
 	};
 
@@ -40,12 +61,13 @@ namespace ec {
 		~Renderer();
 
 		const RendererData& getData() const;
+		RendererData& getData();
 
 	private:
 
-		std::function<void()> m_quadRendererDrawCallback;
-		std::function<void()> m_bezierRendererDrawCallback;
-
+		void recreate();
+		
+		RendererCallbacks m_callbacks;
 		std::unique_ptr<RendererData> m_data;
 
 	};

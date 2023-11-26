@@ -37,6 +37,9 @@ namespace ec {
 
 		vkDestroyShaderModule(context.getData().device, m_vertexShader, nullptr);
 		vkDestroyShaderModule(context.getData().device, m_fragmentShader, nullptr);
+		for (VkDescriptorSetLayout layout : m_layouts) {
+			vkDestroyDescriptorSetLayout(context.getData().device, layout, nullptr);
+		}
 	}
 
 	const VkShaderModule VulkanShaderPack::getVertexShader() const
@@ -122,7 +125,7 @@ namespace ec {
 			}
 
 			if (!bindings.empty()) {
-				m_layouts[i] = createLayout(context, bindings.data(), bindings.size());
+				m_layouts[i] = createLayout(context, bindings.data(), (uint32_t)bindings.size());
 			}
 
 		}
