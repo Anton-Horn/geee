@@ -5,25 +5,13 @@
 
 namespace ec {
 
-	void VulkanQuadRenderer::create( VulkanContext& context, VulkanQuadRendererCreateInfo& createInfo) {
+	void VulkanQuadRenderer::create( VulkanContext& context, VulkanRendererCreateInfo& createInfo) {
 
 		m_window = createInfo.window;
 
-		VkSamplerCreateInfo samplerCreateInfo = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-		samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
-		samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
-		samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerCreateInfo.mipLodBias = 0;
-		samplerCreateInfo.maxAnisotropy = 1.0f;
-		samplerCreateInfo.minLod = 0.0f;
-		samplerCreateInfo.maxLod = 1.0f;
+		m_data.sampler = createSampler(context);
 
-		VKA(vkCreateSampler(context.getData().device, &samplerCreateInfo, nullptr, &m_data.sampler));
-
-		VkAttachmentDescription colorAttachment = createAttachment(1, createInfo.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE);
+		VkAttachmentDescription colorAttachment = createAttachment(1, createInfo.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
 		std::vector<VkAttachmentReference> colorAttachmentReferences = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
 		std::vector<VkAttachmentReference> resolveAttachments = {};
 		std::vector<VkAttachmentReference> inputAttachments = {};
@@ -37,8 +25,7 @@ namespace ec {
 			m_data.framebuffers[i].create(context, m_data.renderpass, { &createInfo.window->swapchain.getImages()[i]});
 		}
 
-		m_data.commandPool = createCommandPool(context);
-		m_data.commandBuffer = allocateCommandBuffer(context, m_data.commandPool);
+		m_data.commandBuffer = allocateCommandBuffer(context, createInfo.commandPool);
 
 		// Index-Daten für das Rechteck
 		uint32_t indexData[] = {
@@ -51,10 +38,10 @@ namespace ec {
 
 		QuadVertex vertexData[4];
 
-		vertexData[0] = { glm::vec3(1.0f, 0.0f, 0.0f)  , glm::vec2(1.0f, 0.0f) };    // Oben Rechts
-		vertexData[1] = { glm::vec3(1.0f,  1.0f, 0.0f) , glm::vec2(1.0f, 1.0f) };    // Unten rechts
-		vertexData[2] = { glm::vec3(0.0f, 1.0f, 0.0f)   , glm::vec2(0.0f, 1.0f) };    // Unten links
-		vertexData[3] = { glm::vec3(0.0f, 0.0f, 0.0f)   , glm::vec2(0.0f, 0.0f) };    // Oben links
+		vertexData[0] = { {0.5f, 0.5f, 0.0f}, {1.0f, 1.0f} };    // Oben Rechts
+		vertexData[1] = { {0.5f, -0.5f, 0.0f}, {1.0f, 0.0f} };   // Unten Rechts
+		vertexData[2] = { {-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f} };  // Unten Links
+		vertexData[3] = { {-0.5f, 0.5f, 0.0f}, {0.0f, 1.0f} };   // Oben Links
 
 		m_data.vertexBuffer.uploadData(context, vertexData, sizeof(vertexData));
 
@@ -62,12 +49,7 @@ namespace ec {
 		m_data.indexBuffer.create(context, sizeof(indexData), VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, MemoryType::Device_local);
 		m_data.indexBuffer.uploadData(context, indexData, sizeof(indexData), 0);
 		
-		std::vector<VkDescriptorPoolSize> poolSizes = {
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, m_data.MAX_QUAD_COUNT },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, m_data.MAX_QUAD_COUNT },
-		};
-
-		m_data.descriptorPool = createDesciptorPool(context,m_data.MAX_QUAD_COUNT, poolSizes);
+		m_data.descriptorPool = createInfo.rpfDescriptorPool;
 
 		//textured Quad Pipeline
 
@@ -86,7 +68,7 @@ namespace ec {
 		m_data.texturedQuadObjectUniformBuffer.create(context, MemoryType::Host_local, m_data.MAX_QUAD_COUNT);
 
 		m_data.texturedQuadGlobalUniformBuffer.create(context, MemoryType::Device_local);
-		glm::mat4 proj = glm::ortho(0.0f, 1280.0f, 0.0f, 720.0f);
+		glm::mat4 proj = glm::ortho(0.0f, 1280.0f, 0.0f, 720.0f, -1000.0f, 0.0f);
 		m_data.texturedQuadGlobalUniformBuffer.buffer.uploadData(context, &proj, sizeof(glm::mat4), 0);
 
 		m_data.texturedQuadGlobalDataDescriptorSet = allocateDescriptorSet(context, context.getData().generalDescriptorPool, m_data.texturedQuadPipeline.getShaders().getLayouts()[0]);
@@ -99,7 +81,7 @@ namespace ec {
 		for (uint32_t i = 0; i < m_data.framebuffers.size(); i++) {
 			m_data.framebuffers[i].destroy(context);
 		}
-		vkDestroyCommandPool(context.getData().device, m_data.commandPool, nullptr);
+		
 		m_data.renderpass.destroy(context);
 		m_data.vertexBuffer.destroy(context);
 		m_data.indexBuffer.destroy(context);
@@ -116,10 +98,6 @@ namespace ec {
 	{
 
 		EC_ASSERT(m_data.state == QuadRendererState::OUT_OF_FRAME);
-
-		VKA(vkResetDescriptorPool(context.getData().device, m_data.descriptorPool, 0));
-
-		VKA(vkResetCommandPool(context.getData().device, m_data.commandPool, 0));
 
 		VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;

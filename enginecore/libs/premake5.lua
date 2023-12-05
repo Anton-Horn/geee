@@ -124,29 +124,6 @@ project "vma"
     optimize "On"
     symbols "off"
 
-project "spirv-reflect"
-    kind "StaticLib"
-    language "C"
-    location "%{prj.name}"
-    staticruntime "on"
-
-    files {
-        "%{prj.name}/spirv_reflect.h",
-        "%{prj.name}/spirv_reflect.c"
-    }
-
-    includedirs {
-        "%{prj.name}/"
-    }
-
-
-    filter "configurations:Debug"
-    symbols "On"
-
-    filter "configurations:Release"
-    optimize "On"
-    symbols "off"
-
 project "glm"
     kind "None"
     cppdialect "C++11"

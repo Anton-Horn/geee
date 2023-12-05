@@ -10,9 +10,11 @@ struct GLFWwindow;
 
 namespace ec {
 
-	struct VulkanQuadRendererCreateInfo {
+	struct VulkanRendererCreateInfo {
 
 		VulkanWindow* window;
+		VkCommandPool commandPool;
+		VkDescriptorPool rpfDescriptorPool; // reset per frame descriptor Pool
 
 	};
 
@@ -38,7 +40,6 @@ namespace ec {
 		const uint32_t MAX_QUAD_COUNT = 1000;
 
 		VkCommandBuffer commandBuffer;
-		VkCommandPool commandPool;
 
 		VulkanRenderpass renderpass;
 		std::vector<VulkanFramebuffer> framebuffers;
@@ -75,7 +76,7 @@ namespace ec {
 		VulkanQuadRenderer(const VulkanQuadRenderer&&) = delete;
 		VulkanQuadRenderer& operator=(const VulkanQuadRenderer&&) = delete;
 
-		void create(VulkanContext& context, VulkanQuadRendererCreateInfo& createInfo);
+		void create(VulkanContext& context, VulkanRendererCreateInfo& createInfo);
 		void destroy(VulkanContext& context);
 
 		void beginFrame(VulkanContext& context);
@@ -90,12 +91,6 @@ namespace ec {
 
 		VulkanQuadRendererData m_data;
 		VulkanWindow* m_window;
-
-	};
-
-	struct VulkanBezierRendererCreateInfo {
-
-		VulkanWindow* window;
 
 	};
 
@@ -122,7 +117,7 @@ namespace ec {
 
 		VulkanRenderpass renderpass;
 		VkCommandBuffer commandBuffer;
-		VkCommandPool commandPool;
+
 		VulkanPipeline pipeline;
 		std::vector<VulkanFramebuffer> framebuffers;
 		VulkanBuffer vertexBuffer;
@@ -153,7 +148,7 @@ namespace ec {
 		VulkanBezierRenderer(const VulkanBezierRenderer&&) = delete;
 		VulkanBezierRenderer& operator=(const VulkanBezierRenderer&&) = delete;
 
-		void create(VulkanContext& context, VulkanBezierRendererCreateInfo& createInfo);
+		void create(VulkanContext& context, VulkanRendererCreateInfo& createInfo);
 		void destroy(VulkanContext& context);
 
 		void drawCurve(VulkanContext& context, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& c1, const glm::vec3& c2, const glm::vec4& color);
@@ -203,7 +198,7 @@ namespace ec {
 		VulkanPipeline pipeline;
 
 		VkCommandBuffer commandBuffer;
-		VkCommandPool commandPool;
+
 		VkSampler sampler;
 		std::vector<VulkanFramebuffer> framebuffers;
 		std::vector<VulkanImage> depthImages;
@@ -224,12 +219,6 @@ namespace ec {
 
 	};
 
-	struct VulkanGoochRendererCreateInfo {
-
-		VulkanWindow* window;
-
-	};
-
 	class VulkanGoochRenderer {
 
 	public:
@@ -243,7 +232,7 @@ namespace ec {
 		VulkanGoochRenderer(const VulkanGoochRenderer&&) = delete;
 		VulkanGoochRenderer& operator=(const VulkanGoochRenderer&&) = delete;
 
-		void create(VulkanContext& context, VulkanGoochRendererCreateInfo& createInfo);
+		void create(VulkanContext& context, VulkanRendererCreateInfo& createInfo);
 		void destroy(VulkanContext& context);
 
 		void beginFrame(VulkanContext& context);
@@ -269,7 +258,6 @@ namespace ec {
 	struct VulkanMandelbrotRendererData {
 
 		VkCommandBuffer commandBuffer;
-		VkCommandPool commandPool;
 
 		VulkanRenderpass renderpass;
 		std::vector<VulkanFramebuffer> framebuffers;
@@ -296,7 +284,7 @@ namespace ec {
 		VulkanMandelbrotRenderer(const VulkanMandelbrotRenderer&&) = delete;
 		VulkanMandelbrotRenderer& operator=(const VulkanMandelbrotRenderer&&) = delete;
 
-		void create(VulkanContext& context, VulkanWindow* window);
+		void create(VulkanContext& context, VulkanRendererCreateInfo& createInfo);
 		void destroy(VulkanContext& context);
 
 		VkCommandBuffer drawMandelbrot(VulkanContext& context,const glm::mat4& transform, const glm::vec2& cstart, float zoom, float iterations);

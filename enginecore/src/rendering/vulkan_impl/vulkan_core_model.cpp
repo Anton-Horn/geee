@@ -128,12 +128,12 @@ namespace ec {
 
 	}
 
-	const VulkanMesh& VulkanModel::getMesh() const
+	const VulkanModelMesh& VulkanModel::getMesh() const
 	{
 		return m_mesh;
 	}
 
-	const VulkanMaterial& VulkanModel::getMat() const
+	const VulkanModelMaterial& VulkanModel::getMat() const
 	{
 		return m_mat;
 	}

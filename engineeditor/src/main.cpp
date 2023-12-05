@@ -27,6 +27,8 @@ namespace ec {
         VulkanImage image;
 
         VkCommandBuffer additionalCommandBuffer;
+        VkCommandPool commandPool;
+        VkDescriptorPool rpfDescriptorPool;
 
         MandelbrotSpec mandelbrotSpec;
 
@@ -94,32 +96,29 @@ void initImGui(){
 
     ImGui_ImplVulkan_Init(&initInfo, renderer.getData().quadRenderer.getData().renderpass.getRenderpass());
 
-    // Use any command queue
-    VkCommandPool commandPool = renderer.getData().quadRenderer.getData().commandPool;
-    VkCommandBuffer commandBuffer = renderer.getData().quadRenderer.getData().commandBuffer;
+    imguiData.commandPool = ec::createCommandPool(renderer.getData().context);
+    imguiData.commandBuffer = ec::allocateCommandBuffer(renderer.getData().context, imguiData.commandPool);
 
-    VKA(vkResetCommandPool(contextData.device, commandPool, 0));
+    VKA(vkResetCommandPool(contextData.device, imguiData.commandPool, 0));
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    VKA(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+    VKA(vkBeginCommandBuffer(imguiData.commandBuffer, &beginInfo));
 
-    ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+    ImGui_ImplVulkan_CreateFontsTexture(imguiData.commandBuffer);
 
-    VKA(vkEndCommandBuffer(commandBuffer));
+    VKA(vkEndCommandBuffer(imguiData.commandBuffer));
 
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
+    submitInfo.pCommandBuffers = &imguiData.commandBuffer;
 
     VKA(vkQueueSubmit(contextData.queue, 1, &submitInfo, VK_NULL_HANDLE));
 
     VKA(vkDeviceWaitIdle(contextData.device));
     ImGui_ImplVulkan_DestroyFontUploadObjects();
-   
-    imguiData.commandPool = ec::createCommandPool(renderer.getData().context);
-    imguiData.commandBuffer = ec::allocateCommandBuffer(renderer.getData().context, imguiData.commandPool);
+  
 
     VkAttachmentDescription colorAttachment = ec::createAttachment(1, renderer.getData().window.swapchain.getFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE);
     std::vector<VkAttachmentReference> colorAttachmentReferences = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
@@ -135,6 +134,19 @@ void initImGui(){
         imguiData.framebuffers[i].create(renderer.getData().context, imguiData.renderpass, {&renderer.getData().window.swapchain.getImages()[i]});
     }
     renderer.getData().additionalCommandBuffer = imguiData.commandBuffer;
+
+}
+
+void destroyImgui() {
+
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    vkDestroyDescriptorPool(renderer.getData().context.getData().device, imguiData.descriptorPool, nullptr);
+    vkDestroyCommandPool(renderer.getData().context.getData().device, imguiData.commandPool, nullptr);
+    for (uint32_t i = 0; i < imguiData.framebuffers.size(); i++) {
+        imguiData.framebuffers[i].destroy(renderer.getData().context);
+    }
+    imguiData.renderpass.destroy(renderer.getData().context);
 
 }
 
@@ -229,7 +241,8 @@ void renderImGui(){
 
 void recreateImGui() {
 
-
+    destroyImgui();
+    initImGui();
 
 }
 
@@ -268,11 +281,7 @@ void terminateApplication() {
 
    
     renderer.getData().synController.waitDeviceIdle(renderer.getData().context);
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    vkDestroyDescriptorPool(renderer.getData().context.getData().device, imguiData.descriptorPool, nullptr);
-    vkDestroyCommandPool(renderer.getData().context.getData().device, imguiData.commandPool, nullptr);
-    imguiData.renderpass.destroy(renderer.getData().context);
+    destroyImgui();
     renderer.destroy();
 }
 

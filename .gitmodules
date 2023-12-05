@@ -7,9 +7,6 @@
 [submodule "enginecore/libs/vma"]
 	path = enginecore/libs/vma
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
-[submodule "enginecore/libs/spirv-reflect"]
-	path = enginecore/libs/spirv-reflect
-	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
 [submodule "enginecore/libs/glm"]
 	path = enginecore/libs/glm
 	url = https://github.com/g-truc/glm.git

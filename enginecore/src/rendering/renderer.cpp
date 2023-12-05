@@ -25,8 +25,11 @@ namespace ec {
 		VulkanImage image;
 
 		VkCommandBuffer additionalCommandBuffer;
+		VkCommandPool commandPool;
+		VkDescriptorPool rpfDescriptorPool;
 
 		MandelbrotSpec mandelbrotSpec = { 0.0f, 0.0f, 30.0f, 1.0f };
+
 
 	};
 
@@ -43,22 +46,37 @@ namespace ec {
 
 		m_data->synController.create(m_data->context);
 
-		VulkanQuadRendererCreateInfo createInfo;
+		m_data->commandPool = createCommandPool(m_data->context);
+
+		std::vector<VkDescriptorPoolSize> poolSizes = {
+			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+		};
+
+		m_data->rpfDescriptorPool = createDesciptorPool(m_data->context, 1000, poolSizes);
+
+		VulkanRendererCreateInfo createInfo;
 		createInfo.window = &m_data->window;
+		createInfo.commandPool = m_data->commandPool;
+		createInfo.rpfDescriptorPool = m_data->rpfDescriptorPool;
+
 		m_data->quadRenderer.create(m_data->context, createInfo);
-
-		VulkanBezierRendererCreateInfo bezierRendererCreateInfo;
-		bezierRendererCreateInfo.window = &m_data->window;
-		m_data->bezierRenderer.create(m_data->context, bezierRendererCreateInfo);
-
-		VulkanGoochRendererCreateInfo goochRendererCreateInfo;
-		goochRendererCreateInfo.window = &m_data->window;
-		m_data->goochRenderer.create(m_data->context, goochRendererCreateInfo);
+		m_data->bezierRenderer.create(m_data->context, createInfo);
+		m_data->goochRenderer.create(m_data->context, createInfo);
+		m_data->mandelbrotRenderer.create(m_data->context, createInfo);
 
 		VulkanModelCreateInfo modelCreateInfo = { "data/models/BoomBox.glb", VulkanModelSourceFormat::GLTF};
 		m_data->model.create(m_data->context, modelCreateInfo);
 
-		m_data->mandelbrotRenderer.create(m_data->context, &m_data->window);
 
 		uint32_t data = 0xFFFFFFFF;
 
@@ -77,11 +95,15 @@ namespace ec {
 
 		if (recreateSwapchain) recreate();
 
+		VKA(vkResetDescriptorPool(m_data->context.getData().device, m_data->rpfDescriptorPool, 0));
+
+		VKA(vkResetCommandPool(m_data->context.getData().device, m_data->commandPool, 0));
+
 		//Quad renderer
 
 		m_data->quadRenderer.beginFrame(m_data->context);
 
-		//m_data->quadRenderer.drawTexturedQuad(m_data->context, glm::vec3{0.0f }, {100.0f , 100.0f , 0.0f }, 0.0f, glm::vec4(1.0f), m_data->image);
+		m_data->quadRenderer.drawTexturedQuad(m_data->context, glm::vec3{100.0f, 100.0f, 10.0f}, {200.0f , 200.0f , 0.0f }, 0.0f, glm::vec4(1.0f), m_data->image);
 
 		if (m_callbacks.quadRendererDrawCallback.has_value())
 		m_callbacks.quadRendererDrawCallback.value()();
@@ -112,29 +134,33 @@ namespace ec {
 
 		if (m_callbacks.drawCallback.has_value())
 		m_callbacks.drawCallback.value()();
-		glm::mat4 transform = glm::scale(glm::mat4(1.0f), glm::vec3(m_data->window.swapchain.getWidth(), m_data->window.swapchain.getHeight(), 1.0f));
-		VkCommandBuffer mandelbrotRendererCommandBuffer = m_data->mandelbrotRenderer.drawMandelbrot(m_data->context, transform, glm::vec2(m_data->mandelbrotSpec.csX, m_data->mandelbrotSpec.csY), 1.0f /  m_data->mandelbrotSpec.zoom, m_data->mandelbrotSpec.iterations);
 
-		m_data->synController.submitFrameAndPresent(m_data->context, m_data->window, { bezierRendererCommandBuffer, goochRendererCommandBuffer, quadRendererCommandBuffer, mandelbrotRendererCommandBuffer, m_data->additionalCommandBuffer }, recreateSwapchain);
+		//glm::mat4 transform = glm::scale(glm::mat4(1.0f), glm::vec3(m_data->window.swapchain.getWidth(), m_data->window.swapchain.getHeight(), 1.0f));
+		//VkCommandBuffer mandelbrotRendererCommandBuffer = m_data->mandelbrotRenderer.drawMandelbrot(m_data->context, transform, glm::vec2(m_data->mandelbrotSpec.csX, m_data->mandelbrotSpec.csY), 1.0f /  m_data->mandelbrotSpec.zoom, m_data->mandelbrotSpec.iterations);
+
+		m_data->synController.submitFrameAndPresent(m_data->context, m_data->window, { quadRendererCommandBuffer, bezierRendererCommandBuffer, goochRendererCommandBuffer, m_data->additionalCommandBuffer}, recreateSwapchain);
 
 		if (recreateSwapchain) recreate();
 
 	}
 	void Renderer::destroy() {
 
-		m_data->image.destroy(m_data->context);
-
 		m_data->synController.waitDeviceIdle(m_data->context);
-
+		m_data->image.destroy(m_data->context);
 		m_data->model.destroy(m_data->context);
-		
+	
 		m_data->synController.destroy(m_data->context);
+
 		m_data->window.swapchain.destroy(m_data->context);
+
+		vkDestroyDescriptorPool(m_data->context.getData().device, m_data->rpfDescriptorPool, nullptr);
+		vkDestroyCommandPool(m_data->context.getData().device, m_data->commandPool, nullptr);
+
 		m_data->quadRenderer.destroy(m_data->context);
 		m_data->goochRenderer.destroy(m_data->context);
 		m_data->bezierRenderer.destroy(m_data->context);
 		m_data->mandelbrotRenderer.destroy(m_data->context);
-		m_data->mandelbrotRenderer.destroy(m_data->context);
+
 		destroySurface(m_data->context, m_data->window.surface);
 		m_data->context.destroy();
 		
@@ -174,19 +200,15 @@ namespace ec {
 		m_data->bezierRenderer.destroy(m_data->context);
 		m_data->mandelbrotRenderer.destroy(m_data->context);
 
-		VulkanQuadRendererCreateInfo createInfo;
+		VulkanRendererCreateInfo createInfo;
 		createInfo.window = &m_data->window;
+		createInfo.commandPool = m_data->commandPool;
+		createInfo.rpfDescriptorPool = m_data->rpfDescriptorPool;
+
 		m_data->quadRenderer.create(m_data->context, createInfo);
-
-		VulkanBezierRendererCreateInfo bezierRendererCreateInfo;
-		bezierRendererCreateInfo.window = &m_data->window;
-		m_data->bezierRenderer.create(m_data->context, bezierRendererCreateInfo);
-
-		VulkanGoochRendererCreateInfo goochRendererCreateInfo;
-		goochRendererCreateInfo.window = &m_data->window;
-		m_data->goochRenderer.create(m_data->context, goochRendererCreateInfo);
-
-		m_data->mandelbrotRenderer.create(m_data->context, &m_data->window);
+		m_data->bezierRenderer.create(m_data->context, createInfo);
+		m_data->goochRenderer.create(m_data->context, createInfo);
+		m_data->mandelbrotRenderer.create(m_data->context, createInfo);
 
 		if (m_callbacks.recreateCallback.has_value())
 		m_callbacks.recreateCallback.value()();

@@ -2,8 +2,29 @@
 #include <GLFW/glfw3.h>
 
 namespace ec {
+	VkSampler createSampler(VulkanContext& context)
+	{
+		
+		VkSamplerCreateInfo samplerCreateInfo = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+		samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
+		samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
+		samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerCreateInfo.mipLodBias = 0;
+		samplerCreateInfo.maxAnisotropy = 1.0f;
+		samplerCreateInfo.minLod = 0.0f;
+		samplerCreateInfo.maxLod = 1.0f;
 
-	 VkDescriptorPool createDesciptorPool(VulkanContext& context, uint32_t maxSets, const std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t flags) {
+		VkSampler sampler = {};
+
+		VKA(vkCreateSampler(context.getData().device, &samplerCreateInfo, nullptr, &sampler));
+
+		return sampler;
+
+	}
+	VkDescriptorPool createDesciptorPool(VulkanContext& context, uint32_t maxSets, const std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t flags) {
 
 		VkDescriptorPool result = 0;
 

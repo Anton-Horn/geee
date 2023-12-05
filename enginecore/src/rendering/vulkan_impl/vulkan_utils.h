@@ -4,6 +4,8 @@
 
 namespace ec {
 
+    VkSampler createSampler(VulkanContext& context);
+
     VkDescriptorPool createDesciptorPool(VulkanContext& context, uint32_t maxSets, const std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t flags = 0);
     VkDescriptorSetLayout createSetLayout(VulkanContext& context, const std::vector<VkDescriptorSetLayoutBinding>& bindings);
     VkDescriptorSet allocateDescriptorSet(VulkanContext& context, VkDescriptorPool pool, VkDescriptorSetLayout layout);

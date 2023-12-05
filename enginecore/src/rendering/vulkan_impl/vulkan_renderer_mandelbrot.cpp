@@ -5,9 +5,10 @@
 
 namespace ec {
 
-	void VulkanMandelbrotRenderer::create(VulkanContext& context, VulkanWindow* window) {
+	void VulkanMandelbrotRenderer::create(VulkanContext& context, VulkanRendererCreateInfo& createInfo) {
 		
-		m_window = window;
+		m_window = createInfo.window;
+		VulkanWindow* window = m_window;
 
 		VkAttachmentDescription colorAttachment = createAttachment(1, window->swapchain.getFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE);
 		std::vector<VkAttachmentReference> colorAttachmentReferences = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
@@ -23,8 +24,7 @@ namespace ec {
 			m_data.framebuffers[i].create(context, m_data.renderpass, { &window->swapchain.getImages()[i] });
 		}
 
-		m_data.commandPool = createCommandPool(context);
-		m_data.commandBuffer = allocateCommandBuffer(context, m_data.commandPool);
+		m_data.commandBuffer = allocateCommandBuffer(context, createInfo.commandPool);
 
 		// Index-Daten für das Rechteck
 		uint32_t indexData[] = {
@@ -70,7 +70,6 @@ namespace ec {
 	void VulkanMandelbrotRenderer::destroy(VulkanContext& context) {
 
 		m_data.pipeline.destroy(context);
-		vkDestroyCommandPool(context.getData().device, m_data.commandPool, nullptr);
 		for (uint32_t i = 0; i < m_data.framebuffers.size(); i++) {
 			m_data.framebuffers[i].destroy(context);
 		}
@@ -83,8 +82,6 @@ namespace ec {
 
 	VkCommandBuffer VulkanMandelbrotRenderer::drawMandelbrot(VulkanContext& context, const glm::mat4& transform, const glm::vec2& cstart, float zoom, float iterations) {
 
-
-		VKA(vkResetCommandPool(context.getData().device, m_data.commandPool, 0));
 
 		VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;

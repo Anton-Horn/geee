@@ -5,20 +5,21 @@ DONE:
 - Create Uniformbuffer/Dynamic Uniform Buffer class
 - create gooch renderer/lighting
 - render Mandelbrot set
-
-CURRENT:
 - refactor quad renderer
-
-TODO:
 - destroy vulkan objects 
 - fix vertex data
-- merge quad and bezier renderer
-- refactor Framebuffers
+- warnings
+
+CURRENT:
 - basic shader/material system, pipeline refactor
+
+
+TODO:
 - add entt
 - implement basic renderer/application multithreading
 - refactor renderer data
 - Implement gltf model loading 2.0: create Model Importer
+- dynamic syampler creation
 
 RECOURCES:
 

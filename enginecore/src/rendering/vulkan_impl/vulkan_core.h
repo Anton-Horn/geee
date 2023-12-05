@@ -97,7 +97,7 @@ namespace ec {
 		
 		void create(VulkanContext& context, MemoryType type = MemoryType::Auto, uint32_t count = 1) {
 
-			alignedSize = alignToPow2(context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(T));
+			alignedSize = alignToPow2((uint32_t)context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(T));
 			buffer.create(context, alignedSize * count, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, type);
 		}
 
@@ -234,6 +234,35 @@ namespace ec {
 
 	};
 
+	struct VulkanShaderResource {
+
+
+
+	};
+
+	class VulkanShaderModule {
+
+	public:
+
+		VulkanShaderModule() = default;
+		~VulkanShaderModule() = default;
+
+		VulkanShaderModule(const VulkanShaderModule&) = delete;
+		VulkanShaderModule& operator=(const VulkanShaderModule&) = delete;
+
+		VulkanShaderModule(const VulkanShaderModule&&) = delete;
+		VulkanShaderModule& operator=(const VulkanShaderModule&&) = delete;
+
+		void create(VulkanContext& context, const std::filesystem::path& filePath);
+		void destroy(VulkanContext& context);
+
+	private:
+
+		std::vector<VulkanShaderResource> m_resources;
+		VkShaderModule m_module;
+
+	};
+
 	class VulkanShaderPack {
 
 	public:
@@ -277,6 +306,24 @@ namespace ec {
 
 		bool depthTestEnabled = false;
 		uint8_t sampleCount = 1;
+
+	};
+
+	class VulkanMaterialTemplate {
+
+	public:
+
+		VulkanMaterialTemplate() = default;
+		~VulkanMaterialTemplate() = default;
+
+		VulkanMaterialTemplate(const VulkanMaterialTemplate&) = delete;
+		VulkanMaterialTemplate& operator=(const VulkanMaterialTemplate&) = delete;
+
+		VulkanMaterialTemplate(const VulkanMaterialTemplate&&) = delete;
+		VulkanMaterialTemplate& operator=(const VulkanMaterialTemplate&&) = delete;
+
+		void create(VulkanContext& context);
+		void destroy(VulkanContext& context);
 
 	};
 
@@ -341,7 +388,7 @@ namespace ec {
 	
 	};
 
-	struct VulkanMesh {
+	struct VulkanModelMesh {
 
 		VulkanBuffer vertexBuffer;
 		VulkanBuffer indexBuffer;
@@ -350,7 +397,7 @@ namespace ec {
 
 	};
 
-	struct VulkanMaterial {
+	struct VulkanModelMaterial {
 
 		VulkanImage albedo;
 
@@ -363,15 +410,15 @@ namespace ec {
 		void create(VulkanContext& context, VulkanModelCreateInfo& createInfo);
 		void destroy(VulkanContext& context);
 
-		const VulkanMaterial& getMat() const;
-		const VulkanMesh& getMesh() const;
+		const VulkanModelMaterial& getMat() const;
+		const VulkanModelMesh& getMesh() const;
 
 	private:
 
 		void fillBuffer(uint8_t const* inputBuffer, uint8_t* outputBuffer, uint32_t inputStride, uint32_t outputStride, uint32_t count, uint32_t elementSize);
 
-		VulkanMaterial m_mat;
-		VulkanMesh m_mesh;
+		VulkanModelMaterial m_mat;
+		VulkanModelMesh m_mesh;
 
 	};
 

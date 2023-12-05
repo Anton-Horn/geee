@@ -4,7 +4,7 @@
 
 namespace ec {
 
-	void VulkanGoochRenderer::create(VulkanContext& context, VulkanGoochRendererCreateInfo& createInfo) {
+	void VulkanGoochRenderer::create(VulkanContext& context, VulkanRendererCreateInfo& createInfo) {
 
 		m_window = createInfo.window;
 
@@ -58,12 +58,11 @@ namespace ec {
 			m_data.framebuffers[i].create(context, m_data.renderpass, { &createInfo.window->swapchain.getImages()[i], &m_data.depthImages[i] });
 		}
 
-		m_data.commandPool = createCommandPool(context);
-		m_data.commandBuffer = allocateCommandBuffer(context, m_data.commandPool);
+		m_data.commandBuffer = allocateCommandBuffer(context, createInfo.commandPool);
 
 		m_data.objectUniformBuffer.create(context, MemoryType::Host_local, m_data.MAX_MESHES_COUNT);
 
-		m_data.descriptorPool = createDesciptorPool(context, m_data.MAX_MESHES_COUNT, { {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, m_data.MAX_MESHES_COUNT}, {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, m_data.MAX_MESHES_COUNT } });
+		m_data.descriptorPool = createInfo.rpfDescriptorPool;
 
 
 		m_data.camera.projection = glm::perspective(glm::radians(45.0f), 16.0f / 9.0f, 0.01f, -100.0f);
@@ -89,9 +88,6 @@ namespace ec {
 	{
 
 		EC_ASSERT(m_data.state == GoochRendererState::OUT_OF_FRAME);
-		VKA(vkResetDescriptorPool(context.getData().device, m_data.descriptorPool, 0));
-
-		VKA(vkResetCommandPool(context.getData().device, m_data.commandPool, 0));
 
 		VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -173,8 +169,7 @@ namespace ec {
 		}
 		m_data.renderpass.destroy(context);
 		m_data.pipeline.destroy(context);
-		vkDestroyCommandPool(context.getData().device, m_data.commandPool, nullptr);
-		vkDestroyDescriptorPool(context.getData().device, m_data.descriptorPool, nullptr);
+		
 		m_data.globalUniformBuffer.destroy(context);
 		m_data.objectUniformBuffer.destroy(context);
 
