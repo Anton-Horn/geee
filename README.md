@@ -1,4 +1,4 @@
-[image](logo_transparent.png)
+![image](logo_transparent.png)
 
 # geee
 
