@@ -1,22 +1,29 @@
-# My Game Application
+# geee
 
-This repository contains an application utilizing the `enginecore` as its game engine.
+Geee is a very bare bone library to build games. 
+It´s a mix between a game engine and framework (e. g Monogame).
+Scripting is done through the runtime where you can load the scenes, assets created in the editor.
+It currently uses exclusivly Vulkan as the graphics API. 
 
-## Overview
 
-The application integrates the `enginecore` as its underlying game engine to handle core functionalities.
+### Current Features
 
-### Features
+- 2D quad, bezier splines Rendering
+- Basic 3D redering 
+- ImGui as Editor UI
 
-- Engine-based rendering and logic handling.
-- Integration of entt for Entity Component System (ECS).
-- Native C++ scripting for logic implementation.
+### Current Goal
+
+- Basic scene/level editor
+- Asset Management, asset browser
+- Basic renderer/application multithreading
+- Physically based rendering
 
 ## Getting Started
 
 ### Prerequisites
 
-- **Vulkan SDK:** Ensure the Vulkan SDK is installed on your system.
+- **Vulkan SDK:** with Shader Toolchain Debug Symbols.
 
 ### Setup
 
@@ -26,57 +33,64 @@ The application integrates the `enginecore` as its underlying game engine to han
     ```
 
 2. **Building the Application:**
-   - Ensure `enginecore` is properly linked and included in the project.
-
-3. **Project Structure:**
-   ```
-   MyApplication/
-   |-- src/
-   |   |-- main.cpp
-   |   |-- YourOtherSourceFiles.cpp
-   |-- enginecore/
-   |   |-- (EngineCoreSourceFiles)
-   |-- engineeditor/
-   |   |-- (EditorSourceFiles)
-   |-- assets/
-   |   |-- (EngineAssets)
-   |-- other_folders/
-   |   |-- (OtherFolders)
-   |-- generate.bat
-   |-- README.md
-   ```
-
-4. **Building Steps:**
-   - Integrate `enginecore` into your build system (Visual Studio, Premake, etc.).
-   - Link necessary include paths and library dependencies for `enginecore` in your project.
+   - For Visual Studio: run build.bat
+   - Any other build systems: run premake with desired target
 
 ## Usage
 
-### Initializing the Engine
+### Create scenes
+
+1. compile and run the editor project
+
+### Building own runtime, scripting
+
+1. Setup
+   -Link enginecore and set src as include path
 
 ```cpp
-#include "enginecore/Application.h"
+#include "ec.h"
+
+void create(ec::Application& app) {
+
+}
+
+void update() {
+
+}
+
+void terminate() {
+
+}
 
 // ...
 
 ec::ApplicationCreateInfo createInfo;
 createInfo.createCallback = create;
 createInfo.updateCallback = update;
-createInfo.terminateCallback = terminateApplication;
-createInfo.windowCreateInfo = { 1280, 720, "editor" };
+createInfo.terminateCallback = terminate;
+createInfo.windowCreateInfo = { 1280, 720, "window_name" };
 
 ec::Application app;
 app.create(createInfo);
 ```
 
-### Utilizing the Engine
-
-- Once initialized, use engine functionalities to load scenes, manage assets, and implement game logic.
-- Utilize entt for Entity Component System (ECS) operations within your application.
-
 ### Native C++ Scripting
 
-- Implement game logic and behavior using native C++ scripting within your application.
+- All main components of the engine can be accessed through C++ 
+
+## Used Libraries
+
+1. Core
+
+- cgltf: loading gltf models
+- glfw: platform independent window creation and user input
+- glm: math library
+- spdlog: fast threadsafe logging library
+- vma: used to allocate vulkan memory
+
+2. Editor
+
+- imgui
 
 ## Contributing
 
@@ -90,4 +104,4 @@ Contributions are welcome! If you'd like to contribute, please follow these step
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License
