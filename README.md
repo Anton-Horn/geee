@@ -32,7 +32,11 @@ It currently uses exclusivly Vulkan as the graphics API.
 1. **Clone the Repository:** 
     ```bash
     git clone --recursive https://github.com/Anton-Horn/geee.git
+    ```
+    ```bash
     cd geee
+    ```
+    ```bash
     build.bat
     ```
 
