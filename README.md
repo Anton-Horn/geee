@@ -31,7 +31,9 @@ It currently uses exclusivly Vulkan as the graphics API.
 
 1. **Clone the Repository:** 
     ```bash
-    git clone https://github.com/your/repository.git
+    git clone --recursive https://github.com/Anton-Horn/geee.git
+    cd geee
+    build.bat
     ```
 
 2. **Building the Application:**
