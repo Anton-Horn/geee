@@ -14,7 +14,7 @@ It currently uses exclusivly Vulkan as the graphics API.
 - Basic 3D redering 
 - ImGui as Editor UI
 
-### Current Goal
+### Current Goals
 
 - Basic scene/level editor
 - Asset Management, asset browser
