@@ -58,24 +58,24 @@ It currently uses exclusivly Vulkan as the graphics API.
 ```cpp
 #include "ec.h"
 
-void create(ec::Application& app) {
+void createApp(ec::Application& app) {
 
 }
 
-void update() {
+void updateApp() {
 
 }
 
-void terminate() {
+void terminateApp() {
 
 }
 
 // ...
 
 ec::ApplicationCreateInfo createInfo;
-createInfo.createCallback = create;
-createInfo.updateCallback = update;
-createInfo.terminateCallback = terminate;
+createInfo.createCallback = createApp;
+createInfo.updateCallback = updateApp;
+createInfo.terminateCallback = terminateApp;
 createInfo.windowCreateInfo = { 1280, 720, "window_name" };
 
 ec::Application app;
