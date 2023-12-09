@@ -1,5 +1,3 @@
-#include <spirv_reflect.h>
-
 #include "vulkan_core.h"
 #include "vulkan_utils.h"
 
@@ -9,45 +7,29 @@ namespace ec {
 
 	void VulkanShaderPack::create(VulkanContext& context, const std::filesystem::path& vertexFilePath, const std::filesystem::path& fragmentFilePath) {
 
+		m_vertexShader.create(context, vertexFilePath, VK_SHADER_STAGE_VERTEX_BIT);
+		m_fragmentShader.create(context, fragmentFilePath,VK_SHADER_STAGE_FRAGMENT_BIT);
 
-		std::vector<uint8_t> vertexData = ecUtilsReadBinaryFile(vertexFilePath);
-		std::vector<uint8_t> fragmentData = ecUtilsReadBinaryFile(fragmentFilePath);
-
-		reflectShader(context, vertexData, fragmentData);
-
-		{
-			VkShaderModuleCreateInfo createInfo = { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
-			createInfo.codeSize = vertexData.size();
-			createInfo.pCode = (uint32_t*)vertexData.data();
-
-			VKA(vkCreateShaderModule(context.getData().device, &createInfo, nullptr, &m_vertexShader));
-		}
-
-		{
-			VkShaderModuleCreateInfo createInfo = { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
-			createInfo.codeSize = fragmentData.size();
-			createInfo.pCode = (uint32_t*)fragmentData.data();
-
-			VKA(vkCreateShaderModule(context.getData().device, &createInfo, nullptr, &m_fragmentShader));
-		}
+		createDescriptorSetLayouts(context);
 
 	}
 
 	void VulkanShaderPack::destroy(VulkanContext& context) {
 
-		vkDestroyShaderModule(context.getData().device, m_vertexShader, nullptr);
-		vkDestroyShaderModule(context.getData().device, m_fragmentShader, nullptr);
+		m_vertexShader.destroy(context);
+		m_fragmentShader.destroy(context);
+
 		for (VkDescriptorSetLayout layout : m_layouts) {
 			vkDestroyDescriptorSetLayout(context.getData().device, layout, nullptr);
 		}
 	}
 
-	const VkShaderModule VulkanShaderPack::getVertexShader() const
+	const VulkanShaderModule& VulkanShaderPack::getVertexShader() const
 	{
 		return m_vertexShader;
 	}
 
-	const VkShaderModule VulkanShaderPack::getFragementShader() const
+	const VulkanShaderModule& VulkanShaderPack::getFragementShader() const
 	{
 		return m_fragmentShader;
 	}
@@ -57,100 +39,60 @@ namespace ec {
 		return m_layouts;
 	}
 
-	void VulkanShaderPack::reflectShader(VulkanContext& context, const std::vector<uint8_t>& vertexData, const std::vector<uint8_t>& fragmentData)
+	void VulkanShaderPack::createDescriptorSetLayouts(VulkanContext& context)
 	{
 
-		//Vertex Shader
-		SpvReflectShaderModule vertexModule;
-		SpvReflectResult result = spvReflectCreateShaderModule(vertexData.size(), vertexData.data(), &vertexModule);
-		EC_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
+		std::vector<VulkanShaderResource> resources;
+		resources.insert(resources.end(), m_vertexShader.getResources().begin(), m_vertexShader.getResources().end());
+		resources.insert(resources.end(), m_fragmentShader.getResources().begin(), m_fragmentShader.getResources().end());
 
-		uint32_t vertexLayoutCount = 0;
-		result = spvReflectEnumerateDescriptorSets(&vertexModule, &vertexLayoutCount, nullptr);
-		EC_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
+		std::vector<std::vector<VkDescriptorSetLayoutBinding>> setBindings;
 
-		std::vector<SpvReflectDescriptorSet*> vertexReflectedLayouts;
-		vertexReflectedLayouts.resize(vertexLayoutCount);
+		setBindings.resize(std::max(m_vertexShader.getDescriptorSetCount(), m_fragmentShader.getDescriptorSetCount()) + 1);
 
-		result = spvReflectEnumerateDescriptorSets(&vertexModule, &vertexLayoutCount, vertexReflectedLayouts.data());
-		EC_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
+		for (const VulkanShaderResource& resource : resources) {
 
-		//Fragment Shader
+			VkDescriptorSetLayoutBinding binding = {};
 
-		SpvReflectShaderModule fragmentModule;
-		result = spvReflectCreateShaderModule(fragmentData.size(), fragmentData.data(), &fragmentModule);
-		EC_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
+			binding.binding = resource.binding;
+			binding.descriptorCount = 1;
+			binding.stageFlags = resource.shaderStage;
 
-		uint32_t fragmentLayoutCount = 0;
-		result = spvReflectEnumerateDescriptorSets(&fragmentModule, &fragmentLayoutCount, nullptr);
-		EC_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
-
-		std::vector<SpvReflectDescriptorSet*> fragmentReflectedLayouts;
-		fragmentReflectedLayouts.resize(fragmentLayoutCount);
-
-		result = spvReflectEnumerateDescriptorSets(&fragmentModule, &fragmentLayoutCount, fragmentReflectedLayouts.data());
-		EC_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
-
-		uint32_t highestSetIndex = 0;
-
-		for (auto set : fragmentReflectedLayouts) {
-			highestSetIndex = std::max(set->set, highestSetIndex);
-		}
-
-		for (auto set : vertexReflectedLayouts) {
-			highestSetIndex = std::max(set->set, highestSetIndex);
-		}
-
-		m_layouts.resize(highestSetIndex + 1);
-
-		for (uint32_t i = 0; i < highestSetIndex + 1; i++) {
-
-			std::vector<std::pair<VkShaderStageFlags, SpvReflectDescriptorBinding*>> bindings;
-
-			for (auto set : fragmentReflectedLayouts) {
-				if (set->set == i) {
-					for (uint32_t j = 0; j < set->binding_count; j++) {
-
-						bindings.push_back({ VK_SHADER_STAGE_FRAGMENT_BIT, set->bindings[j] });
-					}
-				}
+			switch (resource.type) {
+				case VulkanShaderResourceType::UNIFROM_BUFFER:
+					binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					break;
+				case VulkanShaderResourceType::IMAGE_SAMPLER:
+					binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					break;
+				case VulkanShaderResourceType::DYNAMIC_UNIFORM_BUFFER:
+					binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+					break;
+				default:
+					EC_ERROR("Descriptor type not implemented");
+					EC_ASSERT(false);
 			}
 
-			for (auto set : vertexReflectedLayouts) {
-				if (set->set == i) {
-					for (uint32_t j = 0; j < set->binding_count; j++) {
-						bindings.push_back({ VK_SHADER_STAGE_VERTEX_BIT, set->bindings[j] });
-					}
-				}
-			}
+			binding.pImmutableSamplers = nullptr;
 
-			if (!bindings.empty()) {
-				m_layouts[i] = createLayout(context, bindings.data(), (uint32_t)bindings.size());
-			}
+			setBindings[resource.set].push_back(binding);
 
 		}
 
-		spvReflectDestroyShaderModule(&vertexModule);
+		uint32_t setIndex = 0;
 
-	}
+		m_layouts.resize(setBindings.size());
 
-	VkDescriptorSetLayout VulkanShaderPack::createLayout(VulkanContext& context, std::pair<VkShaderStageFlags, SpvReflectDescriptorBinding*>* bindings, uint32_t bindingCount)
-	{
+		for (std::vector<VkDescriptorSetLayoutBinding>& bindings : setBindings) {
 
-		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
-		layoutBindings.resize(bindingCount);
+			VkDescriptorSetLayoutCreateInfo createInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+			createInfo.bindingCount = bindings.size();
+			createInfo.pBindings = bindings.data();
 
-		for (uint32_t i = 0; i < bindingCount; i++) {
-			SpvReflectDescriptorBinding* binding = bindings[i].second;
+			vkCreateDescriptorSetLayout(context.getData().device, &createInfo, nullptr, &m_layouts[setIndex]);
 
-			std::string bindingName = binding->name;
-			SpvReflectDescriptorType bindingType = binding->descriptor_type;
-			if (bindingName.substr(0, 9) == "_dynamic_" && binding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
-				bindingType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-			}
-
-			layoutBindings[i] = { binding->binding, (VkDescriptorType)bindingType, binding->count, bindings[i].first , nullptr };
+			setIndex++;
 		}
-		return createSetLayout(context, layoutBindings);
+
 	}
 }

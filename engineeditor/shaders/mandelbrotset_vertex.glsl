@@ -9,7 +9,7 @@ layout(location = 2) out float out_iterations;
 layout(location = 3) out float out_zoom;
 
 
-layout(set = 0, binding = 0) uniform _dynamic_object_transforms {
+layout(set = 0, binding = 0) uniform object_transforms {
     mat4 cameraViewProj;
     mat4 model;
     vec4 spec; //xy = c_start, z = iterations, w = zoom

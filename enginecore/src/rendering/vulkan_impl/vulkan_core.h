@@ -2,6 +2,7 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 #include <glm/glm.hpp>
+#include <unordered_map>
 
 #include "core/core.h"
 
@@ -234,9 +235,20 @@ namespace ec {
 
 	};
 
+	enum class VulkanShaderResourceType {
+
+		UNIFROM_BUFFER,
+		DYNAMIC_UNIFORM_BUFFER,
+		IMAGE_SAMPLER
+
+	};
+
 	struct VulkanShaderResource {
 
-
+		VulkanShaderResourceType type;
+		uint32_t set;
+		uint32_t binding;
+		VkShaderStageFlags shaderStage;
 
 	};
 
@@ -253,13 +265,18 @@ namespace ec {
 		VulkanShaderModule(const VulkanShaderModule&&) = delete;
 		VulkanShaderModule& operator=(const VulkanShaderModule&&) = delete;
 
-		void create(VulkanContext& context, const std::filesystem::path& filePath);
+		void create(VulkanContext& context, const std::filesystem::path& filePath, VkShaderStageFlags shaderStage);
 		void destroy(VulkanContext& context);
+
+		const VkShaderModule getModule() const;
+		const std::vector<VulkanShaderResource>& getResources() const;
+		uint32_t getDescriptorSetCount();
 
 	private:
 
 		std::vector<VulkanShaderResource> m_resources;
 		VkShaderModule m_module;
+		uint32_t m_setCount;
 
 	};
 
@@ -279,18 +296,17 @@ namespace ec {
 		void create(VulkanContext& context, const std::filesystem::path& vertexFilePath, const std::filesystem::path& fragmentFilePath);
 		void destroy(VulkanContext& context);
 
-		const VkShaderModule getVertexShader() const;
-		const VkShaderModule getFragementShader() const;
+		const VulkanShaderModule& getVertexShader() const;
+		const VulkanShaderModule& getFragementShader() const;
 		const std::vector<VkDescriptorSetLayout>& getLayouts() const;
 
 	private:
 
-		VkShaderModule m_vertexShader;
-		VkShaderModule m_fragmentShader;
+		VulkanShaderModule m_vertexShader;
+		VulkanShaderModule m_fragmentShader;
 		std::vector<VkDescriptorSetLayout> m_layouts;
 
-		void reflectShader(VulkanContext& context, const std::vector<uint8_t>& vertexData, const std::vector<uint8_t>& fragmentData);
-		VkDescriptorSetLayout createLayout(VulkanContext& context, std::pair<VkShaderStageFlags, SpvReflectDescriptorBinding*>* bindings, uint32_t bindingCount);
+		void createDescriptorSetLayouts(VulkanContext& context);
 
 	};
 

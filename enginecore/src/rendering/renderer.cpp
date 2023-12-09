@@ -125,7 +125,7 @@ namespace ec {
 
 		rotation += 0.01f;
 
-		//m_data->goochRenderer.drawModel(m_data->context, m_data->model, glm::translate(glm::mat4(1.0f), {0.0f, 0.0f, 5.0f}) * glm::scale(glm::mat4(1.0f), {100.0f, 100.0f, 100.0f}) * glm::rotate(glm::mat4(1.0f), rotation, {0.0f, 1.0f, 0.0f}));
+		m_data->goochRenderer.drawModel(m_data->context, m_data->model, glm::translate(glm::mat4(1.0f), {0.0f, 0.0f, 5.0f}) * glm::scale(glm::mat4(1.0f), {100.0f, 100.0f, 100.0f}) * glm::rotate(glm::mat4(1.0f), rotation, {0.0f, 1.0f, 0.0f}));
 
 		if (m_callbacks.goochRendererDrawCallback.has_value())
 		m_callbacks.goochRendererDrawCallback.value()();

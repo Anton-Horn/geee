@@ -11,15 +11,18 @@ DONE:
 - warnings
 
 CURRENT:
-- basic shader/material system, pipeline refactor
 
+- add entt, scene system
 
 TODO:
-- add entt
-- implement basic renderer/application multithreading
-- refactor renderer data
+- github page, read me
 - Implement gltf model loading 2.0: create Model Importer
-- dynamic syampler creation
+- basic editor gui
+- refactor renderer data
+- implement basic renderer/application multithreading
+- move cgltf
+- basic shader/material system, pipeline refactor
+- dynamic sampler creation
 
 RECOURCES:
 

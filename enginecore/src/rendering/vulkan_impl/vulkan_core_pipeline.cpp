@@ -7,15 +7,16 @@ namespace ec {
 	void VulkanPipeline::create(VulkanContext& context, VulkanPipelineCreateInfo& createInfo) {
 
 		VkPipelineShaderStageCreateInfo shaderStages[2];
+
 		m_shaders.create(context, createInfo.vertexShaderFilePath, createInfo.fragmentShaderFilePath);
 		shaderStages[0] = { VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO };
 		shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-		shaderStages[0].module = m_shaders.getVertexShader();
+		shaderStages[0].module = m_shaders.getVertexShader().getModule();
 		shaderStages[0].pName = "main";
 
 		shaderStages[1] = { VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO };
 		shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		shaderStages[1].module = m_shaders.getFragementShader();
+		shaderStages[1].module = m_shaders.getFragementShader().getModule();
 		shaderStages[1].pName = "main";
 
 		std::vector<VkVertexInputAttributeDescription> vertexAttributes;

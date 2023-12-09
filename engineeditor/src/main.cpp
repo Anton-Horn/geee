@@ -288,9 +288,6 @@ void terminateApplication() {
 
 int main() {
 
-
-
-
 	ec::ApplicationCreateInfo createInfo;
 	createInfo.createCallback = create;
 	createInfo.updateCallback = update;

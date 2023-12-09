@@ -10,7 +10,6 @@ workspace "gameengine"
     IncludeDirs["Vulkan"] = "%{VULKAN_SDK}/Include"
     IncludeDirs["vma"] = "enginecore/libs/vma/include"
     IncludeDirs["glm"] = "enginecore/libs/glm"
-    IncludeDirs["spirv-reflect"] = "enginecore/libs/spirv-reflect"
     IncludeDirs["cgltf"] = "enginecore/libs/cgltf"
     Library = {}
     Library["Vulkan"] = "%{VULKAN_SDK}/Lib"
@@ -34,7 +33,6 @@ project "enginecore"
         IncludeDirs["glfw"],
         IncludeDirs["Vulkan"],
         IncludeDirs["vma"],
-        IncludeDirs["spirv-reflect"],
         IncludeDirs["glm"],
         IncludeDirs["cgltf"]
     }
@@ -45,18 +43,24 @@ project "enginecore"
 
     links {
         "glfw",
-        "spirv-reflect",
-        "vulkan-1.lib"
+        "vulkan-1.lib",
     }
 
     defines {"_CRT_SECURE_NO_WARNINGS"}
 
     filter "configurations:Debug"
     defines { "DEBUG"}  
+    runtime "Debug"
     symbols "On" 
+    links {
+        "spirv-cross-cored.lib"
+    }
     filter "configurations:Release"  
     defines { "NDEBUG"}
-    
+    runtime "Release"
+    links {
+        "spirv-cross-core.lib"
+    }
     filter "system:windows"
     defines {"EC_WINDOWS"}
 
@@ -92,12 +96,14 @@ project "engineeditor"
     ignoredefaultlibraries { "LIBCMTD" }
 
     filter "configurations:Debug"
-    defines { "DEBUG" }  
-    symbols "On" 
+        defines { "DEBUG" }  
+        runtime "Debug"
+        symbols "On" 
     filter "configurations:Release"  
-    defines { "NDEBUG" }    
-    optimize "On" 
+        defines { "NDEBUG" }    
+        runtime "Release"
+        optimize "On" 
 
     filter "system:windows"
-    defines {"EC_WINDOWS"}
+        defines {"EC_WINDOWS"}
 
