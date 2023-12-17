@@ -13,7 +13,7 @@ namespace ec {
 	struct VulkanRendererCreateInfo {
 
 		VulkanWindow* window;
-		VkCommandPool commandPool;
+		VkCommandBuffer commandBuffer;
 		VkDescriptorPool rpfDescriptorPool; // reset per frame descriptor Pool
 
 	};
@@ -42,7 +42,6 @@ namespace ec {
 		VkCommandBuffer commandBuffer;
 
 		VulkanRenderpass renderpass;
-		std::vector<VulkanFramebuffer> framebuffers;
 		VulkanBuffer vertexBuffer;
 		VulkanBuffer indexBuffer;
 
@@ -61,6 +60,16 @@ namespace ec {
 
 		uint32_t texturedQuadCount = 0;
 
+		VulkanImage renderTarget;
+		VulkanFramebuffer framebuffer;
+	};
+
+	enum QuadRendererCreateFlags {
+
+		QUAD_RENDERER_SWAPCHAIN_IS_RENDER_TARGET = 1,
+		QUAD_RENDERER_WAIT_FOR_PREVIOUS_RENDERPASSES = 2,
+		QUAD_RENDERER_WAIT_COLOR_ATTACHMENT_OUTPUT = 4
+
 	};
 
 	class VulkanQuadRenderer {
@@ -76,14 +85,15 @@ namespace ec {
 		VulkanQuadRenderer(const VulkanQuadRenderer&&) = delete;
 		VulkanQuadRenderer& operator=(const VulkanQuadRenderer&&) = delete;
 
-		void create(VulkanContext& context, VulkanRendererCreateInfo& createInfo);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context, VulkanRendererCreateInfo& createInfo, uint32_t createFlags = 0);
+		void destroy(const VulkanContext& context);
 
-		void beginFrame(VulkanContext& context);
+		void beginFrame(const VulkanContext& context);
 
-		void drawTexturedQuad(VulkanContext& context, const glm::vec3& position, const glm::vec3& scale, float angle, const glm::vec4& color, VulkanImage& image);
+		void drawTexturedQuad(const VulkanContext& context, const glm::vec3& position, const glm::vec3& scale, float angle, const glm::vec4& color,const VulkanImage& image);
+		void drawTexturedQuad(const VulkanContext& context, const glm::mat4& transform, const glm::vec4& color, const VulkanImage& image);
 	
-		VkCommandBuffer endFrame(VulkanContext& context);
+		void endFrame(const VulkanContext& context);
 
 		const VulkanQuadRendererData& getData() const;
 
@@ -91,6 +101,9 @@ namespace ec {
 
 		VulkanQuadRendererData m_data;
 		VulkanWindow* m_window;
+		
+		uint32_t m_flags;
+
 
 	};
 
@@ -148,13 +161,13 @@ namespace ec {
 		VulkanBezierRenderer(const VulkanBezierRenderer&&) = delete;
 		VulkanBezierRenderer& operator=(const VulkanBezierRenderer&&) = delete;
 
-		void create(VulkanContext& context, VulkanRendererCreateInfo& createInfo);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context, VulkanRendererCreateInfo& createInfo);
+		void destroy(const VulkanContext& context);
 
-		void drawCurve(VulkanContext& context, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& c1, const glm::vec3& c2, const glm::vec4& color);
+		void drawCurve(const VulkanContext& context, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& c1, const glm::vec3& c2, const glm::vec4& color);
 
-		void beginFrame(VulkanContext& context);
-		VkCommandBuffer endFrame(VulkanContext& context);
+		void beginFrame(const VulkanContext& context);
+		void endFrame(const VulkanContext& context);
 
 	private:
 
@@ -232,13 +245,13 @@ namespace ec {
 		VulkanGoochRenderer(const VulkanGoochRenderer&&) = delete;
 		VulkanGoochRenderer& operator=(const VulkanGoochRenderer&&) = delete;
 
-		void create(VulkanContext& context, VulkanRendererCreateInfo& createInfo);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context, VulkanRendererCreateInfo& createInfo);
+		void destroy(const VulkanContext& context);
 
-		void beginFrame(VulkanContext& context);
-		VkCommandBuffer endFrame(VulkanContext& context);
+		void beginFrame(const VulkanContext& context);
+		void endFrame(const VulkanContext& context);
 
-		void drawModel(VulkanContext& context,const VulkanModel& model,const glm::mat4& modelTransform);
+		void drawModel(const VulkanContext& context,const VulkanModel& model,const glm::mat4& modelTransform);
 
 	private:
 
@@ -284,10 +297,10 @@ namespace ec {
 		VulkanMandelbrotRenderer(const VulkanMandelbrotRenderer&&) = delete;
 		VulkanMandelbrotRenderer& operator=(const VulkanMandelbrotRenderer&&) = delete;
 
-		void create(VulkanContext& context, VulkanRendererCreateInfo& createInfo);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context, VulkanRendererCreateInfo& createInfo);
+		void destroy(const VulkanContext& context);
 
-		VkCommandBuffer drawMandelbrot(VulkanContext& context,const glm::mat4& transform, const glm::vec2& cstart, float zoom, float iterations);
+		void drawMandelbrot(const VulkanContext& context,const glm::mat4& transform, const glm::vec2& cstart, float zoom, float iterations);
 
 	private:
 

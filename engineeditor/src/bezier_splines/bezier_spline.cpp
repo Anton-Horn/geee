@@ -1,5 +1,6 @@
 #include "bezier_spline.h"
 
+#include "rendering/renderer_data.h"
 
 void BezierSpline::create(const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& c1, const glm::vec3& c2)
 {
@@ -51,12 +52,12 @@ void BezierSpline::handleInput(float mx, float my, bool mdown) {
 void BezierSpline::draw(ec::Renderer& renderer)
 {
 
-    renderer.drawBezierCurve(*(ec::vec3*)&m_points[0], *(ec::vec3*)&m_points[3], *(ec::vec3*)&m_points[1], *(ec::vec3*)&m_points[2], { 1.0f, 1.0f, 1.0f, 1.0f });
+    renderer.getData().bezierRenderer.drawCurve(renderer.getData().context, m_points[0], m_points[3], m_points[1], m_points[2], { 1.0f, 1.0f, 1.0f, 1.0f });
 
     for (uint32_t i = 3; i < m_points.size(); i += 3) {
    
         if (i + 3 < m_points.size()) 
-        renderer.drawBezierCurve(*(ec::vec3*)&m_points[0 + i], *(ec::vec3*)&m_points[3 + i], *(ec::vec3*)&m_points[1 + i], *(ec::vec3*)&m_points[2 + i], { 1.0f, 1.0f, 1.0f, 1.0f });
+            renderer.getData().bezierRenderer.drawCurve(renderer.getData().context,m_points[0 + i], m_points[3 + i], m_points[1 + i], m_points[2 + i], { 1.0f, 1.0f, 1.0f, 1.0f });
 
     }
 

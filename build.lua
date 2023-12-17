@@ -11,6 +11,7 @@ workspace "gameengine"
     IncludeDirs["vma"] = "enginecore/libs/vma/include"
     IncludeDirs["glm"] = "enginecore/libs/glm"
     IncludeDirs["cgltf"] = "enginecore/libs/cgltf"
+    IncludeDirs["entt"] = "enginecore/libs/entt/single_include"
     Library = {}
     Library["Vulkan"] = "%{VULKAN_SDK}/Lib"
 
@@ -34,7 +35,8 @@ project "enginecore"
         IncludeDirs["Vulkan"],
         IncludeDirs["vma"],
         IncludeDirs["glm"],
-        IncludeDirs["cgltf"]
+        IncludeDirs["cgltf"],
+        IncludeDirs["entt"]
     }
 
     libdirs {
@@ -48,19 +50,24 @@ project "enginecore"
 
     defines {"_CRT_SECURE_NO_WARNINGS"}
 
+    disablewarnings {"4099"}
+
     filter "configurations:Debug"
-    defines { "DEBUG"}  
-    runtime "Debug"
-    symbols "On" 
-    links {
-        "spirv-cross-cored.lib"
-    }
+        defines { "DEBUG"}  
+        runtime "Debug"
+        symbols "on" 
+        links {
+            "spirv-cross-cored.lib"
+        }
+
     filter "configurations:Release"  
-    defines { "NDEBUG"}
-    runtime "Release"
-    links {
-        "spirv-cross-core.lib"
-    }
+        defines { "NDEBUG"}
+        runtime "Release"
+        symbols "Off"
+        links {
+            "spirv-cross-core.lib"
+        }
+
     filter "system:windows"
     defines {"EC_WINDOWS"}
 
@@ -79,12 +86,13 @@ project "engineeditor"
     includedirs {
         "%{wks.location}/%{prj.name}/src",
         "%{wks.location}/enginecore/src",
+        "engineeditor/libs/imgui",
         IncludeDirs["spdlog"],
         IncludeDirs["Vulkan"],
         IncludeDirs["glfw"],
         IncludeDirs["glm"],
         IncludeDirs["vma"],
-        "engineeditor/libs/imgui"
+        IncludeDirs["entt"]
     }
 
     links {
@@ -107,3 +115,36 @@ project "engineeditor"
     filter "system:windows"
         defines {"EC_WINDOWS"}
 
+project "runtime"  
+    kind "ConsoleApp"
+    language "C++"   
+    cppdialect "C++17"
+    location "%{prj.name}"
+    targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
+    objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
+    files {"%{wks.location}/%{prj.name}/src/**.h", "%{wks.location}/%{prj.name}/src/**.cpp" }
+    includedirs {
+        "%{wks.location}/%{prj.name}/src",
+        "%{wks.location}/enginecore/src",
+        IncludeDirs["spdlog"],
+        IncludeDirs["entt"]
+    }
+    
+    links {
+        "enginecore",
+    }
+    
+    defines {"_CRT_SECURE_NO_WARNINGS"}
+    ignoredefaultlibraries { "LIBCMTD" }
+    
+    filter "configurations:Debug"
+        defines { "DEBUG" }  
+        runtime "Debug"
+        symbols "On" 
+    filter "configurations:Release"  
+        defines { "NDEBUG" }    
+        runtime "Release"
+        optimize "On" 
+    
+    filter "system:windows"
+        defines {"EC_WINDOWS"}

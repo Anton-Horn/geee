@@ -2,7 +2,7 @@
 
 namespace ec {
 
-	void VulkanRenderpass::create(VulkanContext& context, const std::vector<VkAttachmentDescription>& attachments, const std::vector<VkSubpassDescription>& subpasses, const std::vector<VkSubpassDependency>& dependencies) {
+	void VulkanRenderpass::create(const VulkanContext& context, const std::vector<VkAttachmentDescription>& attachments, const std::vector<VkSubpassDescription>& subpasses, const std::vector<VkSubpassDependency>& dependencies) {
 
 		VkRenderPassCreateInfo createInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
 		createInfo.attachmentCount = (uint32_t)attachments.size();
@@ -16,9 +16,7 @@ namespace ec {
 
 	}
 
-	void VulkanRenderpass::destroy(VulkanContext& context) {
-
-
+	void VulkanRenderpass::destroy(const VulkanContext& context) {
 
 		vkDestroyRenderPass(context.getData().device, m_renderpass, nullptr);
 

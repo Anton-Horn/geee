@@ -14,7 +14,7 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof((x)[0]))
 
-#define DEFAULT_CON_DEFAULT_DE_NO_COPY_NO_MOVE(x) x() = default;\
+#define EC_DEFAULT_CON_DEFAULT_DE_NO_COPY_NO_MOVE(x) x() = default;\
 												 ~x() = default;\
 												 x(const x&) = delete;\
 												 x& operator=(const x&) = delete;\

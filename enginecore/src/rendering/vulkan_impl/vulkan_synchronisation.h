@@ -8,12 +8,14 @@ namespace ec {
 
 	public:
 
-		void create(VulkanContext& context);
-		void destroy(VulkanContext& context);
-
-		void waitAndBeginFrame(VulkanContext& context, VulkanWindow& window, bool& recreateSwapchain);
-		void submitFrameAndPresent(VulkanContext& context, VulkanWindow& window, const std::vector<VkCommandBuffer>& data, bool& recreateSwapchain);
+		void create(const VulkanContext& context);
+		void destroy(const VulkanContext& context);
+		
+		void waitAndAquireImage(const VulkanContext& context, VulkanWindow& window, bool& recreateSwapchain);
+		void submitFrame(VulkanContext& context, VulkanWindow& window, const std::vector<VkCommandBuffer>& data);
 		void waitDeviceIdle(const VulkanContext& context) const;
+
+		VkSemaphore getSubmitSemaphore();
 
 	private:
 

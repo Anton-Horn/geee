@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <unordered_map>
 
+#include <thread>
 #include "core/core.h"
 
 struct SpvReflectDescriptorBinding;
@@ -75,11 +76,11 @@ namespace ec {
 		VulkanBuffer(const VulkanBuffer&&) = delete;
 		VulkanBuffer& operator=(const VulkanBuffer&&) = delete;
 
-		void create(VulkanContext& context, uint64_t size, uint32_t usage, MemoryType type = MemoryType::Auto);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context, uint64_t size, uint32_t usage, MemoryType type = MemoryType::Auto);
+		void destroy(const VulkanContext& context);
 
-		void uploadData(VulkanContext& context, void* data, uint32_t size, uint32_t offset = 0);
-		uint64_t getSize(VulkanContext& context) const;
+		void uploadData(const VulkanContext& context, void* data, uint32_t size, uint32_t offset = 0);
+		uint64_t getSize(const VulkanContext& context) const;
 		const VkBuffer getBuffer() const;
 
 	private:
@@ -96,13 +97,13 @@ namespace ec {
 
 	public:
 		
-		void create(VulkanContext& context, MemoryType type = MemoryType::Auto, uint32_t count = 1) {
+		void create(const VulkanContext& context, MemoryType type = MemoryType::Auto, uint32_t count = 1) {
 
 			alignedSize = alignToPow2((uint32_t)context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(T));
 			buffer.create(context, alignedSize * count, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, type);
 		}
 
-		void destroy(VulkanContext& context) {
+		void destroy(const VulkanContext& context) {
 
 			buffer.destroy(context);
 
@@ -110,6 +111,30 @@ namespace ec {
 
 		VulkanBuffer buffer;
 		uint32_t alignedSize = 0;
+
+	};
+
+	class VulkanRenderpass {
+
+	public:
+
+		VulkanRenderpass() = default;
+		~VulkanRenderpass() = default;
+
+		VulkanRenderpass(const VulkanRenderpass&) = delete;
+		VulkanRenderpass& operator=(const VulkanRenderpass&) = delete;
+
+		VulkanRenderpass(const VulkanRenderpass&&) = delete;
+		VulkanRenderpass& operator=(const VulkanRenderpass&&) = delete;
+
+		void create(const VulkanContext& context, const std::vector<VkAttachmentDescription>& attachments, const std::vector<VkSubpassDescription>& subpasses, const std::vector<VkSubpassDependency>& dependencies = {});
+		void destroy(const VulkanContext& context);
+
+		const VkRenderPass getRenderpass() const;
+
+	private:
+
+		VkRenderPass m_renderpass;
 
 	};
 
@@ -127,10 +152,13 @@ namespace ec {
 		VulkanImage(const VulkanImage&&) {};
 		VulkanImage& operator=(const VulkanImage&&) {};
 
-		void create(VulkanContext& context, uint32_t width, uint32_t height, uint32_t format = VK_FORMAT_R8G8B8A8_UNORM, uint32_t usageFlags = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, uint32_t sampleCount = 1);
+		void create(const VulkanContext& context, uint32_t width, uint32_t height, uint32_t format = VK_FORMAT_R8G8B8A8_UNORM, uint32_t usageFlags = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, uint32_t sampleCount = 1);
 		void create(VkImage image, VkImageView view, uint32_t width, uint32_t height);
-		void destroy(VulkanContext& context);
-		void uploadData(VulkanContext& context, void* data, uint32_t width, uint32_t height, uint32_t bytePerPixel, uint32_t layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		void destroy(const VulkanContext& context);
+		void uploadData(const VulkanContext& context, void* data, uint32_t width, uint32_t height, uint32_t bytePerPixel, uint32_t layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		// bad performance, uses own queue submit and waits for it being finished!
+		void switchLayout(const VulkanContext& context, uint32_t newLayout);
 
 		const VkImage getImage() const;
 		const VkImageView getImageView() const;
@@ -144,70 +172,7 @@ namespace ec {
 		VmaAllocation m_allocation;
 		uint32_t m_imageWidth, m_imageHeight;
 		bool m_mutable = false;
-
-	};
-
-	class VulkanSwapchain {
-
-	public:
-
-		VulkanSwapchain() = default;
-		~VulkanSwapchain() = default;
-
-		VulkanSwapchain(const VulkanSwapchain&) = delete;
-		VulkanSwapchain& operator=(const VulkanSwapchain&) = delete;
-
-		VulkanSwapchain(const VulkanSwapchain&&) = delete;
-		VulkanSwapchain& operator=(const VulkanSwapchain&&) = delete;
-
-		void create(VulkanContext& VulkanContext, VkSurfaceKHR surface);
-		void recreate(VulkanContext& VulkanContext, VkSurfaceKHR surface);
-		void destroy(VulkanContext& VulkanContext);
-
-		VkResult aquireNextImage(VulkanContext& VulkanContext, VkSemaphore signalSemaphore);
-
-		uint32_t getWidth() const;
-		uint32_t getHeight() const;
-		uint32_t getCurrentIndex() const;
-
-		VkFormat getFormat() const;
-		const std::vector<VulkanImage>& getImages() const;
-		const VkSwapchainKHR getSwapchain() const;
-
-	private:
-
-		VkSwapchainKHR m_swapchain;
-
-		std::vector<VulkanImage> m_images;
-
-		uint32_t m_swapchainWidth;
-		uint32_t m_swapchainHeight;
-		VkFormat m_format;
-		uint32_t m_currentSwapchainImageIndex;
-
-	};
-
-	class VulkanRenderpass {
-
-	public:
-
-		VulkanRenderpass() = default;
-		~VulkanRenderpass() = default;
-
-		VulkanRenderpass(const VulkanRenderpass&) = delete;
-		VulkanRenderpass& operator=(const VulkanRenderpass&) = delete;
-
-		VulkanRenderpass(const VulkanRenderpass&&) = delete;
-		VulkanRenderpass& operator=(const VulkanRenderpass&&) = delete;
-
-		void create(VulkanContext& context, const std::vector<VkAttachmentDescription>& attachments, const std::vector<VkSubpassDescription>& subpasses, const std::vector<VkSubpassDependency>& dependencies = {});
-		void destroy(VulkanContext& context);
-
-		const VkRenderPass getRenderpass() const;
-
-	private:
-
-		VkRenderPass m_renderpass;
+		VkImageLayout m_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 	};
 
@@ -224,8 +189,8 @@ namespace ec {
 		VulkanFramebuffer(const VulkanFramebuffer&&) noexcept {};
 		VulkanFramebuffer& operator=(const VulkanFramebuffer&&) noexcept {};
 
-		void create(VulkanContext& context, VulkanRenderpass& renderpass, const std::vector<const VulkanImage*>& images);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context, VulkanRenderpass& renderpass, const std::vector<const VulkanImage*>& images);
+		void destroy(const VulkanContext& context);
 
 		const VkFramebuffer getFramebuffer() const;
 
@@ -234,6 +199,59 @@ namespace ec {
 		VkFramebuffer m_framebuffer;
 
 	};
+
+	class VulkanSwapchain {
+
+	public:
+
+		VulkanSwapchain() = default;
+		~VulkanSwapchain() = default;
+
+		VulkanSwapchain(const VulkanSwapchain&) = delete;
+		VulkanSwapchain& operator=(const VulkanSwapchain&) = delete;
+
+		VulkanSwapchain(const VulkanSwapchain&&) = delete;
+		VulkanSwapchain& operator=(const VulkanSwapchain&&) = delete;
+
+		void create(const VulkanContext& context, VkSurfaceKHR surface);
+		void recreate(const VulkanContext& context, VkSurfaceKHR surface);
+		void destroy(const VulkanContext& context);
+
+		//returns true if swapchain needs to be recreated
+		bool aquireNextImage(const VulkanContext& context, VkSemaphore signalSemaphore);
+
+		//returns true if swapchain needs to be recreated
+		bool present(const VulkanContext& context, const std::vector<VkSemaphore> waitSemaphores);
+
+		uint32_t getWidth() const;
+		uint32_t getHeight() const;
+		uint32_t getCurrentIndex() const;
+
+		const VulkanRenderpass& getRenderpass() const;
+		const std::vector<VulkanFramebuffer>& getFramebuffers() const;
+
+		VkFormat getFormat() const;
+		const std::vector<VulkanImage>& getImages() const;
+		const VkSwapchainKHR getSwapchain() const;
+
+	private:
+
+		VkSwapchainKHR m_swapchain;
+
+		std::vector<VulkanImage> m_images;
+
+		// should be used for last pass into the swapchain
+		std::vector<VulkanFramebuffer> m_framebuffers;
+		VulkanRenderpass m_renderpass;
+
+		uint32_t m_swapchainWidth;
+		uint32_t m_swapchainHeight;
+		VkFormat m_format;
+		uint32_t m_currentSwapchainImageIndex;
+
+	};
+
+	
 
 	enum class VulkanShaderResourceType {
 
@@ -257,7 +275,7 @@ namespace ec {
 	public:
 
 		VulkanShaderModule() = default;
-		~VulkanShaderModule() = default;
+		~VulkanShaderModule();
 
 		VulkanShaderModule(const VulkanShaderModule&) = delete;
 		VulkanShaderModule& operator=(const VulkanShaderModule&) = delete;
@@ -265,8 +283,8 @@ namespace ec {
 		VulkanShaderModule(const VulkanShaderModule&&) = delete;
 		VulkanShaderModule& operator=(const VulkanShaderModule&&) = delete;
 
-		void create(VulkanContext& context, const std::filesystem::path& filePath, VkShaderStageFlags shaderStage);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context, const std::filesystem::path& filePath, VkShaderStageFlags shaderStage);
+		void destroy(const VulkanContext& context);
 
 		const VkShaderModule getModule() const;
 		const std::vector<VulkanShaderResource>& getResources() const;
@@ -293,8 +311,8 @@ namespace ec {
 		VulkanShaderPack(const VulkanShaderPack&&) = delete;
 		VulkanShaderPack& operator=(const VulkanShaderPack&&) = delete;
 
-		void create(VulkanContext& context, const std::filesystem::path& vertexFilePath, const std::filesystem::path& fragmentFilePath);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context, const std::filesystem::path& vertexFilePath, const std::filesystem::path& fragmentFilePath);
+		void destroy(const VulkanContext& context);
 
 		const VulkanShaderModule& getVertexShader() const;
 		const VulkanShaderModule& getFragementShader() const;
@@ -306,7 +324,7 @@ namespace ec {
 		VulkanShaderModule m_fragmentShader;
 		std::vector<VkDescriptorSetLayout> m_layouts;
 
-		void createDescriptorSetLayouts(VulkanContext& context);
+		void createDescriptorSetLayouts(const VulkanContext& context);
 
 	};
 
@@ -338,8 +356,8 @@ namespace ec {
 		VulkanMaterialTemplate(const VulkanMaterialTemplate&&) = delete;
 		VulkanMaterialTemplate& operator=(const VulkanMaterialTemplate&&) = delete;
 
-		void create(VulkanContext& context);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context);
+		void destroy(const VulkanContext& context);
 
 	};
 
@@ -357,8 +375,8 @@ namespace ec {
 		VulkanPipeline& operator=(const VulkanPipeline&&) = delete;
 
 
-		void create(VulkanContext& context, VulkanPipelineCreateInfo& createInfo);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context, VulkanPipelineCreateInfo& createInfo);
+		void destroy(const VulkanContext& context);
 
 		const VkPipelineLayout getLayout() const;
 		const VulkanShaderPack& getShaders() const;
@@ -423,8 +441,8 @@ namespace ec {
 
 	public:
 
-		void create(VulkanContext& context, VulkanModelCreateInfo& createInfo);
-		void destroy(VulkanContext& context);
+		void create(const VulkanContext& context, VulkanModelCreateInfo& createInfo);
+		void destroy(const VulkanContext& context);
 
 		const VulkanModelMaterial& getMat() const;
 		const VulkanModelMesh& getMesh() const;

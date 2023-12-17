@@ -3,12 +3,16 @@
 #include "vulkan_core.h"
 #include "utils/file_utils.h"
 
-
+#include <iostream>
 
 namespace ec {
+	VulkanShaderModule::~VulkanShaderModule()
+	{
 
+		
 
-	void VulkanShaderModule::create(VulkanContext& context, const std::filesystem::path& filePath, VkShaderStageFlags shaderStage)
+	}
+	void VulkanShaderModule::create(const VulkanContext& context, const std::filesystem::path& filePath, VkShaderStageFlags shaderStage)
 	{
 
 		std::vector<uint8_t> vertexData = ecUtilsReadBinaryFile(filePath);
@@ -61,11 +65,13 @@ namespace ec {
 
 	}
 
-	void VulkanShaderModule::destroy(VulkanContext& context)
+
+
+
+	void VulkanShaderModule::destroy(const VulkanContext& context)
 	{
-
 		vkDestroyShaderModule(context.getData().device, m_module, nullptr);
-
+		m_resources.clear();
 	}
 
 	const VkShaderModule VulkanShaderModule::getModule() const

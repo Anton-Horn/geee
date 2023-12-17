@@ -4,7 +4,7 @@
 
 namespace ec {
 	int count = 0;
-	void VulkanPipeline::create(VulkanContext& context, VulkanPipelineCreateInfo& createInfo) {
+	void VulkanPipeline::create(const VulkanContext& context, VulkanPipelineCreateInfo& createInfo) {
 
 		VkPipelineShaderStageCreateInfo shaderStages[2];
 
@@ -106,7 +106,7 @@ namespace ec {
 
 	
 
-	void VulkanPipeline::destroy(VulkanContext& context)
+	void VulkanPipeline::destroy(const VulkanContext& context)
 	{
 
 		m_shaders.destroy(context);

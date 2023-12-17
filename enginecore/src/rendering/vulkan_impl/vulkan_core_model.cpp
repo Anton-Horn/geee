@@ -6,7 +6,7 @@
 
 namespace ec {
 
-	void VulkanModel::create(VulkanContext& context, VulkanModelCreateInfo& createInfo) {
+	void VulkanModel::create(const VulkanContext& context, VulkanModelCreateInfo& createInfo) {
 
 		if (createInfo.sourceFormat == VulkanModelSourceFormat::GLTF) {
 
@@ -120,7 +120,7 @@ namespace ec {
 
 	}
 
-	void VulkanModel::destroy(VulkanContext& context) {
+	void VulkanModel::destroy(const VulkanContext& context) {
 
 		m_mat.albedo.destroy(context);
 		m_mesh.indexBuffer.destroy(context);

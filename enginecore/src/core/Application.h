@@ -1,6 +1,9 @@
 #pragma once
 #include "core/core.h"
 #include "core/window.h"
+#include "core/job_system.h"
+
+#include "rendering/renderer.h"
 
 struct GLFWwindow;
 
@@ -33,9 +36,20 @@ namespace ec {
 		void create(ApplicationCreateInfo& createInfo);
 		const Window& getWindow() const;
 
+		const Renderer& getRenderer() const;
+		Renderer& getRenderer();
+
 	private:
 
+		void frame();
+
 		Window m_window;
+		JobSystem m_jobSystem;
+		Renderer m_renderer;
+		Scene m_scene;
+
+		bool m_windowShouldClose = false;
+		std::function<void()> m_updateCallback;
 
 	};
 

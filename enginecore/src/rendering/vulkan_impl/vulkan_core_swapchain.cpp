@@ -1,8 +1,9 @@
 #include "vulkan_core.h"
+#include "vulkan_utils.h"
 
 namespace ec {
 
-	void VulkanSwapchain::create(VulkanContext& context, VkSurfaceKHR surface)
+	void VulkanSwapchain::create(const VulkanContext& context, VkSurfaceKHR surface)
 	{
 
 		VkBool32 supportsPresent = false;
@@ -52,7 +53,7 @@ namespace ec {
 		swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		swapchainCreateInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		swapchainCreateInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+		swapchainCreateInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
 		swapchainCreateInfo.clipped = VK_FALSE;
 
 		VKA(vkCreateSwapchainKHR(context.getData().device, &swapchainCreateInfo, nullptr, &m_swapchain));
@@ -85,21 +86,40 @@ namespace ec {
 
 		m_images.resize(imageCount);
 
+		VkAttachmentDescription colorAttachment = createAttachment(1, m_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
+		std::vector<VkAttachmentReference> colorAttachmentReferences = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+		std::vector<VkAttachmentReference> resolveAttachments = {};
+		std::vector<VkAttachmentReference> inputAttachments = {};
+		VkSubpassDescription subpassDescription = createSubpass(colorAttachmentReferences, resolveAttachments, inputAttachments);
+
+		m_renderpass.create(context, { colorAttachment }, { subpassDescription });
+
+		m_framebuffers.resize(imageCount);
+
 		for (uint32_t i = 0; i < imageCount; i++) {
 			m_images[i].create(vkImages[i], vkImageViews[i], m_swapchainWidth, m_swapchainHeight);
+			//m_images[i].switchLayout(context, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+			m_framebuffers[i].create(context, m_renderpass, { &m_images[i] });
 		}
 
 	}
 
-	void VulkanSwapchain::recreate(VulkanContext& context, VkSurfaceKHR surface) {
+	void VulkanSwapchain::recreate(const VulkanContext& context, VkSurfaceKHR surface) {
 
 		destroy(context);
 		create(context, surface);
 
 	}
 
-	void VulkanSwapchain::destroy(VulkanContext& context)
+	void VulkanSwapchain::destroy(const VulkanContext& context)
 	{
+		m_renderpass.destroy(context);
+		
+		for (uint32_t i = 0; i < m_framebuffers.size(); i++) {
+			m_framebuffers[i].destroy(context);
+		}
+
 		for (auto& image : m_images) {
 			vkDestroyImageView(context.getData().device, image.getImageView(), nullptr);
 		}
@@ -107,9 +127,41 @@ namespace ec {
 		vkDestroySwapchainKHR(context.getData().device, m_swapchain, nullptr);
 	}
 
-	VkResult VulkanSwapchain::aquireNextImage(VulkanContext& context, VkSemaphore signalSemaphore)
+	bool VulkanSwapchain::aquireNextImage(const VulkanContext& context, VkSemaphore signalSemaphore)
 	{
-		return vkAcquireNextImageKHR(context.getData().device, m_swapchain, UINT64_MAX, signalSemaphore, 0, &m_currentSwapchainImageIndex);
+		VkResult r = vkAcquireNextImageKHR(context.getData().device, m_swapchain, UINT64_MAX, signalSemaphore, 0, &m_currentSwapchainImageIndex);
+		if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
+			return true;
+		}
+		else {
+			VKA(r);
+			return false;
+		}
+	}
+
+	bool VulkanSwapchain::present(const VulkanContext& context, const std::vector<VkSemaphore> waitSemaphores)
+	{
+
+		VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+		presentInfo.swapchainCount = 1;
+
+		presentInfo.pSwapchains = &m_swapchain;
+		presentInfo.waitSemaphoreCount = waitSemaphores.size();
+		presentInfo.pWaitSemaphores = waitSemaphores.data();
+
+		uint32_t currentIndex = m_currentSwapchainImageIndex;
+
+		presentInfo.pImageIndices = &currentIndex;
+
+		VkResult r = vkQueuePresentKHR(context.getData().queue, &presentInfo);
+		if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
+			return true;
+		}
+		else {
+			VKA(r);
+			return false;
+		}
+
 	}
 
 	uint32_t VulkanSwapchain::getWidth() const
@@ -125,6 +177,16 @@ namespace ec {
 	uint32_t VulkanSwapchain::getCurrentIndex() const
 	{
 		return m_currentSwapchainImageIndex;
+	}
+
+	const VulkanRenderpass& VulkanSwapchain::getRenderpass() const
+	{
+		return m_renderpass;
+	}
+
+	const std::vector<VulkanFramebuffer>& VulkanSwapchain::getFramebuffers() const
+	{
+		return m_framebuffers;
 	}
 
 	VkFormat VulkanSwapchain::getFormat() const

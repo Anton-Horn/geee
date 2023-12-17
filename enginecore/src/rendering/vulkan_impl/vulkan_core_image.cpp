@@ -3,7 +3,7 @@
 
 namespace ec {
 
-	void VulkanImage::create(VulkanContext& context, uint32_t width, uint32_t height, uint32_t format, uint32_t usageFlags, uint32_t sampleCount)
+	void VulkanImage::create(const VulkanContext& context, uint32_t width, uint32_t height, uint32_t format, uint32_t usageFlags, uint32_t sampleCount)
 	{
 
 		m_mutable = true;
@@ -61,14 +61,14 @@ namespace ec {
 		m_imageHeight = height;
 	}
 
-	void VulkanImage::destroy(VulkanContext& context)
+	void VulkanImage::destroy(const VulkanContext& context)
 	{
 		if (!m_mutable) return;
 		vkDestroyImageView(context.getData().device, m_imageView, nullptr);
 		vmaDestroyImage(context.getData().allocator, m_image, m_allocation);
 	}
 
-	void VulkanImage::uploadData(VulkanContext& context, void* data, uint32_t width, uint32_t height, uint32_t bytesPerPixel, uint32_t layout)
+	void VulkanImage::uploadData(const VulkanContext& context, void* data, uint32_t width, uint32_t height, uint32_t bytesPerPixel, uint32_t layout)
 	{
 
 		EC_ASSERT(m_mutable);
@@ -156,10 +156,9 @@ namespace ec {
 			imageBarrier.subresourceRange.layerCount = 1;
 			imageBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			imageBarrier.dstAccessMask = VK_ACCESS_NONE;
-
+			
 
 			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, 0, 0, 0, 1, &imageBarrier);
-
 		}
 
 		vkEndCommandBuffer(commandBuffer);
@@ -174,6 +173,56 @@ namespace ec {
 
 		vkDestroyCommandPool(context.getData().device, commandPool, nullptr);
 		vmaDestroyBuffer(context.getData().allocator, stagingBuffer, stagingAllocation);
+
+	}
+
+	void VulkanImage::switchLayout(const VulkanContext& context, uint32_t newLayout)
+	{
+
+		VkCommandPool commandPool;
+		VkCommandPoolCreateInfo commandPoolCreateInfo = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+		commandPoolCreateInfo.queueFamilyIndex = context.getData().queueFamilyIndex;
+		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+		VKA(vkCreateCommandPool(context.getData().device, &commandPoolCreateInfo, nullptr, &commandPool));
+
+		VkCommandBuffer commandBuffer;
+		VkCommandBufferAllocateInfo allocateInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+		allocateInfo.commandBufferCount = 1;
+		allocateInfo.commandPool = commandPool;
+		allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+		VKA(vkAllocateCommandBuffers(context.getData().device, &allocateInfo, &commandBuffer));
+
+		VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		vkBeginCommandBuffer(commandBuffer, &beginInfo);	
+
+		VkImageMemoryBarrier imageBarrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+		imageBarrier.oldLayout = m_layout;
+		imageBarrier.newLayout = (VkImageLayout) newLayout;
+		imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		imageBarrier.image = m_image;
+		imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageBarrier.subresourceRange.levelCount = 1;
+		imageBarrier.subresourceRange.layerCount = 1;
+		imageBarrier.srcAccessMask = VK_ACCESS_NONE;
+		imageBarrier.dstAccessMask = VK_ACCESS_NONE;
+
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, 0, 0, 0, 1, &imageBarrier);
+		
+		vkEndCommandBuffer(commandBuffer);
+
+		VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
+
+		vkQueueSubmit(context.getData().queue, 1, &submitInfo, 0);
+
+		vkQueueWaitIdle(context.getData().queue);
+
+		vkDestroyCommandPool(context.getData().device, commandPool, nullptr);
 
 	}
 

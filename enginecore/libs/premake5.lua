@@ -10,6 +10,13 @@ project "spdlog"
         "%{prj.name}/include/",
     }
 
+    filter "configurations:Debug"
+        symbols "On"
+
+    filter "configurations:Release"
+        optimize "On"
+        symbols "Off"
+
 project "glfw"
     location "%{prj.name}"
     language "C"
@@ -104,11 +111,11 @@ project "glfw"
 
     filter "configurations:Release"
         optimize "On"
-        symbols "off"
+        symbols "Off"
 
     filter "configurations:Dist" 
         optimize "On"
-        symbols "off"
+        symbols "Off"
 
 project "vma"
     kind "None"
@@ -122,7 +129,7 @@ project "vma"
 
     filter "configurations:Release"
     optimize "On"
-    symbols "off"
+    symbols "Off"
 
 project "glm"
     kind "None"
@@ -141,5 +148,26 @@ project "glm"
     
     filter "configurations:Release"
         optimize "On"
-        symbols "off"
+        symbols "Off"
+
+project "entt"
+    kind "None"
+    cppdialect "C++17"
+    location "%{prj.name}"
+    staticruntime "on"
+        
+    files {"%{prj.name}/single_include/**.hpp" }
+        
+    includedirs {
+        "%{prj.name}/single_include",
+    }
+        
+    filter "configurations:Debug"
+        symbols "On"
+        runtime "Debug"
+        
+    filter "configurations:Release"
+        optimize "On"
+        symbols "Off"
+        runtime "Release"
     

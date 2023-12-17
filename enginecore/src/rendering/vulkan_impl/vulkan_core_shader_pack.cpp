@@ -5,7 +5,7 @@
 
 namespace ec {
 
-	void VulkanShaderPack::create(VulkanContext& context, const std::filesystem::path& vertexFilePath, const std::filesystem::path& fragmentFilePath) {
+	void VulkanShaderPack::create(const VulkanContext& context, const std::filesystem::path& vertexFilePath, const std::filesystem::path& fragmentFilePath) {
 
 		m_vertexShader.create(context, vertexFilePath, VK_SHADER_STAGE_VERTEX_BIT);
 		m_fragmentShader.create(context, fragmentFilePath,VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -14,14 +14,16 @@ namespace ec {
 
 	}
 
-	void VulkanShaderPack::destroy(VulkanContext& context) {
+	void VulkanShaderPack::destroy(const VulkanContext& context) {
 
 		m_vertexShader.destroy(context);
+
 		m_fragmentShader.destroy(context);
 
 		for (VkDescriptorSetLayout layout : m_layouts) {
 			vkDestroyDescriptorSetLayout(context.getData().device, layout, nullptr);
 		}
+		m_layouts.clear();
 	}
 
 	const VulkanShaderModule& VulkanShaderPack::getVertexShader() const
@@ -39,7 +41,7 @@ namespace ec {
 		return m_layouts;
 	}
 
-	void VulkanShaderPack::createDescriptorSetLayouts(VulkanContext& context)
+	void VulkanShaderPack::createDescriptorSetLayouts(const VulkanContext& context)
 	{
 
 		std::vector<VulkanShaderResource> resources;
@@ -86,7 +88,7 @@ namespace ec {
 		for (std::vector<VkDescriptorSetLayoutBinding>& bindings : setBindings) {
 
 			VkDescriptorSetLayoutCreateInfo createInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
-			createInfo.bindingCount = bindings.size();
+			createInfo.bindingCount = (uint32_t) bindings.size();
 			createInfo.pBindings = bindings.data();
 
 			vkCreateDescriptorSetLayout(context.getData().device, &createInfo, nullptr, &m_layouts[setIndex]);

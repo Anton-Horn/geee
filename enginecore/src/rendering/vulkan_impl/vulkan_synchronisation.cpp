@@ -4,7 +4,7 @@
 
 namespace ec {
 
-	void VulkanSynchronisationController::create(VulkanContext& context)
+	void VulkanSynchronisationController::create(const VulkanContext& context)
 	{
 
 		m_aquireSemaphore = createSemaphore(context);
@@ -13,7 +13,7 @@ namespace ec {
 
 	}
 
-	void VulkanSynchronisationController::destroy(VulkanContext& context) {
+	void VulkanSynchronisationController::destroy(const VulkanContext& context) {
 
 		vkDestroyFence(context.getData().device,m_fence, nullptr);
 		vkDestroySemaphore(context.getData().device, m_aquireSemaphore, nullptr);
@@ -22,7 +22,7 @@ namespace ec {
 	}
 
 
-	void VulkanSynchronisationController::waitAndBeginFrame(VulkanContext& context, VulkanWindow& window, bool& recreateSwapchain) {
+	void VulkanSynchronisationController::waitAndAquireImage(const VulkanContext& context, VulkanWindow& window, bool& recreateSwapchain) {
 
 		uint32_t imageIndex = 0;
 
@@ -30,18 +30,11 @@ namespace ec {
 
 		VKA(vkResetFences(context.getData().device, 1, &m_fence));
 
-		VkResult r = window.swapchain.aquireNextImage(context, m_aquireSemaphore);
-		if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
-			recreateSwapchain = true;
-		}
-		else {
-			VKA(r);
-			recreateSwapchain = false;
-		}
+		recreateSwapchain = window.swapchain.aquireNextImage(context, m_aquireSemaphore);
 
 	}
 
-	void VulkanSynchronisationController::submitFrameAndPresent(VulkanContext& context, VulkanWindow& window, const std::vector<VkCommandBuffer>& data, bool& recreateSwapchain) {
+	void VulkanSynchronisationController::submitFrame(VulkanContext& context, VulkanWindow& window, const std::vector<VkCommandBuffer>& data) {
 
 		VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 		submitInfo.commandBufferCount = (uint32_t)data.size();
@@ -50,39 +43,22 @@ namespace ec {
 		submitInfo.pWaitSemaphores = &m_aquireSemaphore;
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &m_submitSemaphore;
+
 		VkPipelineStageFlags waitMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		submitInfo.pWaitDstStageMask = &waitMask;
 
 		VKA(vkQueueSubmit(context.getData().queue, 1, &submitInfo, m_fence));
-
-		VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
-		presentInfo.swapchainCount = 1;
-
-		const VkSwapchainKHR swapchain = window.swapchain.getSwapchain();
-
-		presentInfo.pSwapchains = &swapchain;
-		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = &m_submitSemaphore;
-
-		uint32_t currentIndex = window.swapchain.getCurrentIndex();
-
-		presentInfo.pImageIndices = &currentIndex;
-
-		VkResult r = vkQueuePresentKHR(context.getData().queue, &presentInfo);
-		if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
-			recreateSwapchain = true;
-		}
-		else {
-			VKA(r);
-			recreateSwapchain = false;
-		}
-
 	}
 
 	void VulkanSynchronisationController::waitDeviceIdle(const VulkanContext& context) const {
 
 		vkDeviceWaitIdle(context.getData().device);
 
+	}
+
+	VkSemaphore VulkanSynchronisationController::getSubmitSemaphore()
+	{
+		return m_submitSemaphore;
 	}
 
 }

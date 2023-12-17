@@ -4,25 +4,25 @@
 
 namespace ec {
 
-    VkSampler createSampler(VulkanContext& context);
+    VkSampler createSampler(const VulkanContext& context);
 
-    VkDescriptorPool createDesciptorPool(VulkanContext& context, uint32_t maxSets, const std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t flags = 0);
-    VkDescriptorSetLayout createSetLayout(VulkanContext& context, const std::vector<VkDescriptorSetLayoutBinding>& bindings);
-    VkDescriptorSet allocateDescriptorSet(VulkanContext& context, VkDescriptorPool pool, VkDescriptorSetLayout layout);
-    void writeDescriptorUniformBuffer(VulkanContext& context, VkDescriptorSet descriptorSet, uint32_t binding, VulkanBuffer& buffer, bool dynamic = false, uint32_t offset = 0, uint32_t range = 0);
-    void writeCombinedImageSampler(VulkanContext& context, VkDescriptorSet descriptorSet, uint32_t binding, const VulkanImage& image, VkSampler sampler);
+    VkDescriptorPool createDesciptorPool(const VulkanContext& context, uint32_t maxSets, const std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t flags = 0);
+    VkDescriptorSetLayout createSetLayout(const VulkanContext& context, const std::vector<VkDescriptorSetLayoutBinding>& bindings);
+    VkDescriptorSet allocateDescriptorSet(const VulkanContext& context, VkDescriptorPool pool, VkDescriptorSetLayout layout);
+    void writeDescriptorUniformBuffer(const VulkanContext& context, VkDescriptorSet descriptorSet, uint32_t binding, VulkanBuffer& buffer, bool dynamic = false, uint32_t offset = 0, uint32_t range = 0);
+    void writeCombinedImageSampler(const VulkanContext& context, VkDescriptorSet descriptorSet, uint32_t binding, const VulkanImage& image, VkSampler sampler);
 
     VkAttachmentDescription createColorAttachment(uint32_t sampleCount);
     VkAttachmentDescription createDepthAttachment(uint32_t sampleCount);
     VkAttachmentDescription createAttachment(uint32_t sampleCount, VkFormat format, VkImageLayout initialLayout, VkImageLayout finalLayout, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp);
     VkSubpassDescription createSubpass(std::vector<VkAttachmentReference>& colorAttachments, std::vector<VkAttachmentReference>& resolveAttachments, std::vector<VkAttachmentReference>& inputAttachments, std::optional<VkAttachmentReference> depthStencilAttachment = std::nullopt);
 
-    VkCommandPool createCommandPool(VulkanContext& context);
-    VkCommandBuffer allocateCommandBuffer(VulkanContext& context, VkCommandPool commandPool);
-    VkFence createFence(VulkanContext& context);
-    VkSemaphore createSemaphore(VulkanContext& context);
-    VkSurfaceKHR createSurface(VulkanContext& context, const Window& window);
-    void destroySurface(VulkanContext& context, VkSurfaceKHR surface);
+    VkCommandPool createCommandPool(const VulkanContext& context);
+    VkCommandBuffer allocateCommandBuffer(const VulkanContext& context, VkCommandPool commandPool);
+    VkFence createFence(const VulkanContext& context);
+    VkSemaphore createSemaphore(const VulkanContext& context);
+    VkSurfaceKHR createSurface(const VulkanContext& context, const Window& window);
+    void destroySurface(const VulkanContext& context, VkSurfaceKHR surface);
 
     uint32_t alignToPow2(uint32_t alignment, uint32_t value);
     VkSampleCountFlagBits getSampleCount(uint8_t sampleCount);

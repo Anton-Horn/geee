@@ -5,7 +5,7 @@
 
 namespace ec {
 
-	void VulkanMandelbrotRenderer::create(VulkanContext& context, VulkanRendererCreateInfo& createInfo) {
+	void VulkanMandelbrotRenderer::create(const VulkanContext& context, VulkanRendererCreateInfo& createInfo) {
 		
 		m_window = createInfo.window;
 		VulkanWindow* window = m_window;
@@ -24,7 +24,7 @@ namespace ec {
 			m_data.framebuffers[i].create(context, m_data.renderpass, { &window->swapchain.getImages()[i] });
 		}
 
-		m_data.commandBuffer = allocateCommandBuffer(context, createInfo.commandPool);
+		m_data.commandBuffer = createInfo.commandBuffer;
 
 		// Index-Daten für das Rechteck
 		uint32_t indexData[] = {
@@ -67,7 +67,7 @@ namespace ec {
 		writeDescriptorUniformBuffer(context, m_data.descriptorSet, 0, m_data.uniformBuffer.buffer);
 
 	}
-	void VulkanMandelbrotRenderer::destroy(VulkanContext& context) {
+	void VulkanMandelbrotRenderer::destroy(const VulkanContext& context) {
 
 		m_data.pipeline.destroy(context);
 		for (uint32_t i = 0; i < m_data.framebuffers.size(); i++) {
@@ -80,7 +80,7 @@ namespace ec {
 		m_data.uniformBuffer.destroy(context);
 	}
 
-	VkCommandBuffer VulkanMandelbrotRenderer::drawMandelbrot(VulkanContext& context, const glm::mat4& transform, const glm::vec2& cstart, float zoom, float iterations) {
+	void VulkanMandelbrotRenderer::drawMandelbrot(const VulkanContext& context, const glm::mat4& transform, const glm::vec2& cstart, float zoom, float iterations) {
 
 
 		VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
@@ -128,7 +128,6 @@ namespace ec {
 
 		vkEndCommandBuffer(m_data.commandBuffer);
 
-		return m_data.commandBuffer;
 	}
 
 }

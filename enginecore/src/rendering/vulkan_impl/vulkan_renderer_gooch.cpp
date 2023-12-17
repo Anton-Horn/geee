@@ -4,7 +4,7 @@
 
 namespace ec {
 
-	void VulkanGoochRenderer::create(VulkanContext& context, VulkanRendererCreateInfo& createInfo) {
+	void VulkanGoochRenderer::create(const VulkanContext& context, VulkanRendererCreateInfo& createInfo) {
 
 		m_window = createInfo.window;
 
@@ -58,7 +58,7 @@ namespace ec {
 			m_data.framebuffers[i].create(context, m_data.renderpass, { &createInfo.window->swapchain.getImages()[i], &m_data.depthImages[i] });
 		}
 
-		m_data.commandBuffer = allocateCommandBuffer(context, createInfo.commandPool);
+		m_data.commandBuffer = createInfo.commandBuffer;
 
 		m_data.objectUniformBuffer.create(context, MemoryType::Host_local, m_data.MAX_MESHES_COUNT);
 
@@ -84,7 +84,7 @@ namespace ec {
 
 	}
 
-	void VulkanGoochRenderer::beginFrame(VulkanContext& context)
+	void VulkanGoochRenderer::beginFrame(const VulkanContext& context)
 	{
 
 		EC_ASSERT(m_data.state == GoochRendererState::OUT_OF_FRAME);
@@ -118,7 +118,7 @@ namespace ec {
 
 	}
 
-	VkCommandBuffer VulkanGoochRenderer::endFrame(VulkanContext& context)
+	void VulkanGoochRenderer::endFrame(const VulkanContext& context)
 	{
 		EC_ASSERT(m_data.state == GoochRendererState::IN_FRAME);
 		vkCmdEndRenderPass(m_data.commandBuffer);
@@ -126,10 +126,10 @@ namespace ec {
 		vkEndCommandBuffer(m_data.commandBuffer);
 		m_data.state = GoochRendererState::OUT_OF_FRAME;
 		m_data.modelCount = 0;
-		return m_data.commandBuffer;
+		
 	}
 
-	void VulkanGoochRenderer::drawModel(VulkanContext& context, const VulkanModel& model, const glm::mat4& modelTransform)
+	void VulkanGoochRenderer::drawModel(const VulkanContext& context, const VulkanModel& model, const glm::mat4& modelTransform)
 	{
 
 		EC_ASSERT(m_data.state == GoochRendererState::IN_FRAME);
@@ -162,7 +162,7 @@ namespace ec {
 
 	}
 
-	void VulkanGoochRenderer::destroy(VulkanContext& context) {
+	void VulkanGoochRenderer::destroy(const VulkanContext& context) {
 
 		for (uint32_t i = 0; i < m_data.framebuffers.size(); i++) {
 			m_data.framebuffers[i].destroy(context);

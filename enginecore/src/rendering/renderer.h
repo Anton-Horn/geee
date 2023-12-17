@@ -1,61 +1,53 @@
 #pragma once
 #include "core/core.h"
-#include "core/application.h"
+#include "core/window.h"
+#include "scene/scene.h"
+
 
 namespace ec {
 
-	struct vec3 {
-
-		float x, y, z;
-
-	};
-
-	struct vec4 {
-
-		float x, y, z, w;
-
-	};
-
-	struct MandelbrotSpec {
-
-		float csX;
-		float csY;
-		float iterations;
-		float zoom;
-
-	};
-
 	struct RendererData;
+	struct RendererSceneData;
 
-	struct RendererCallbacks {
+	enum RendererFlags {
 
-		std::optional<std::function<void()>> drawCallback;
+		RENDERER_NONE = 0,
 
-		std::optional<std::function<void()>> recreateCallback;
-
-		std::optional<std::function<void()>> goochRendererDrawCallback;
-		std::optional<std::function<void()>> quadRendererDrawCallback;
-		std::optional<std::function<void()>> bezierRendererDrawCallback;
+		// if not set we also wait for the renderer to finish each frame
+		// this is for the editor viewport synchronisation
+		RENDERER_PRESENT_TO_SWAPCHAIN = 1
 
 	};
 
 	struct RendererCreateInfo {
 
 		const Window* window;
-		RendererCallbacks callbacks;
+		RendererFlags flags;
 		
-
 	};
 
 	class Renderer {
 
 	public:
 
-		void init(RendererCreateInfo& rendererCreateInfo);
-		void draw();
+		void create(RendererCreateInfo& rendererCreateInfo);
+		void setSceneData(const Scene& scene);
+
+		void beginFrame();
+		void drawFrame();
+		void submitFrame();
+		void presentFrame();
+
 		void destroy();
 
-		void drawBezierCurve(const vec3& p1, const vec3& p2, const vec3& c1, const vec3& c2, const vec4& color);
+		void waitDeviceIdle();
+
+		//Should only be called if in RendererCreateInfo, presentToSwapchain = false
+		void* getPresentImageHandle();
+		//Should only be called if in RendererCreateInfo, presentToSwapchain = false
+		void* getPresentImageView();
+
+		void* getCommandBuffer(void* commandPool = nullptr);
 
 		Renderer();
 		~Renderer();
@@ -67,9 +59,9 @@ namespace ec {
 
 		void recreate();
 		
-		RendererCallbacks m_callbacks;
 		std::unique_ptr<RendererData> m_data;
-
+		std::unique_ptr<RendererSceneData> m_sceneData;
+		RendererFlags m_flags = RENDERER_NONE;
 	};
 
 }

@@ -2,7 +2,7 @@
 
 namespace ec {
 
-	void VulkanBuffer::create(VulkanContext& context, uint64_t size, VkBufferUsageFlags usage, MemoryType type)
+	void VulkanBuffer::create(const VulkanContext& context, uint64_t size, VkBufferUsageFlags usage, MemoryType type)
 	{
 
 		VkBufferCreateInfo createInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -25,12 +25,12 @@ namespace ec {
 		VKA(vmaCreateBuffer(context.getData().allocator, &createInfo, &allocationCreateInfo, &m_buffer, &m_allocation, nullptr));
 	}
 
-	void VulkanBuffer::destroy(VulkanContext& context)
+	void VulkanBuffer::destroy(const VulkanContext& context)
 	{
 		vmaDestroyBuffer(context.getData().allocator, m_buffer, m_allocation);
 	}
 
-	void VulkanBuffer::uploadData(VulkanContext& context, void* data, uint32_t size, uint32_t offset)
+	void VulkanBuffer::uploadData(const VulkanContext& context, void* data, uint32_t size, uint32_t offset)
 	{
 
 		assert(offset + size <= getSize(context));
@@ -121,7 +121,7 @@ namespace ec {
 		}
 	}
 
-	uint64_t VulkanBuffer::getSize(VulkanContext& context) const
+	uint64_t VulkanBuffer::getSize(const VulkanContext& context) const
 	{
 
 		VmaAllocationInfo allocationInfo;

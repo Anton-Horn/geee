@@ -20,3 +20,6 @@
 [submodule "enginecore/libs/cgltf"]
 	path = enginecore/libs/cgltf
 	url = https://github.com/jkuhlmann/cgltf.git
+[submodule "enginecore/libs/entt"]
+	path = enginecore/libs/entt
+	url = https://github.com/skypjack/entt.git

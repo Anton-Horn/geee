@@ -9,20 +9,27 @@ DONE:
 - destroy vulkan objects 
 - fix vertex data
 - warnings
+- github page, read me
+- add entt, scene system
+- Quad Renderer UI
+- basic editor gui
+- implement basic renderer/application multithreading
+- correct semaphore stage flags when submiting, imgui, renderer
 
 CURRENT:
-
-- add entt, scene system
+- resizing, viewport image, imgui semaphore, command buffers and mabye more
 
 TODO:
-- github page, read me
+- Asset Manager
 - Implement gltf model loading 2.0: create Model Importer
-- basic editor gui
-- refactor renderer data
-- implement basic renderer/application multithreading
+- Physically Based Rendering
+- input
 - move cgltf
+- refactor renderer data
+- command buffer situtation, multithreading each renderer, thread safe descriptor pools
 - basic shader/material system, pipeline refactor
 - dynamic sampler creation
+- dont include spdlog in runtime
 
 RECOURCES:
 

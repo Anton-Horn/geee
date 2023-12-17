@@ -6,7 +6,7 @@
 
 namespace ec {
 
-	void VulkanBezierRenderer::create(VulkanContext& context, VulkanRendererCreateInfo& createInfo)
+	void VulkanBezierRenderer::create(const VulkanContext& context, VulkanRendererCreateInfo& createInfo)
 	{
 
 		m_window = createInfo.window;
@@ -36,7 +36,7 @@ namespace ec {
 
 		}
 
-		m_data.commandBuffer = allocateCommandBuffer(context, createInfo.commandPool);
+		m_data.commandBuffer = createInfo.commandBuffer;
 
 		// Index-Daten für das Rechteck
 		uint32_t indexData[] = {
@@ -66,7 +66,7 @@ namespace ec {
 
 	}
 
-	void VulkanBezierRenderer::destroy(VulkanContext& context)
+	void VulkanBezierRenderer::destroy(const VulkanContext& context)
 	{
 
 		for (uint32_t i = 0; i < m_data.framebuffers.size(); i++) {
@@ -83,7 +83,7 @@ namespace ec {
 		
 	}
 
-	void VulkanBezierRenderer::beginFrame(VulkanContext& context)
+	void VulkanBezierRenderer::beginFrame(const VulkanContext& context)
 	{
 		EC_ASSERT(m_data.state == QuadRendererState::OUT_OF_FRAME);
 
@@ -123,7 +123,7 @@ namespace ec {
 
 	}
 
-	void VulkanBezierRenderer::drawCurve(VulkanContext& context,const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& c1, const glm::vec3& c2, const glm::vec4& color)
+	void VulkanBezierRenderer::drawCurve(const VulkanContext& context,const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& c1, const glm::vec3& c2, const glm::vec4& color)
 	{
 
 		EC_ASSERT(m_data.state == QuadRendererState::IN_FRAME);
@@ -179,7 +179,7 @@ namespace ec {
 
 	}
 
-	VkCommandBuffer VulkanBezierRenderer::endFrame(VulkanContext& context)
+	void VulkanBezierRenderer::endFrame(const VulkanContext& context)
 	{
 		EC_ASSERT(m_data.state == QuadRendererState::IN_FRAME);
 		vkCmdEndRenderPass(m_data.commandBuffer);
@@ -187,7 +187,7 @@ namespace ec {
 		vkEndCommandBuffer(m_data.commandBuffer);
 		m_data.state = QuadRendererState::OUT_OF_FRAME;
 		m_data.quadCount = 0;
-		return m_data.commandBuffer;
+		
 	}
 
 

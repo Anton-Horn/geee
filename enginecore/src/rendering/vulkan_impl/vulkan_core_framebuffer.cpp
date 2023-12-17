@@ -2,7 +2,7 @@
 
 namespace ec {
 
-	void VulkanFramebuffer::create(VulkanContext& context, VulkanRenderpass& renderpass, const std::vector<const VulkanImage*>& images) {
+	void VulkanFramebuffer::create(const VulkanContext& context, VulkanRenderpass& renderpass, const std::vector<const VulkanImage*>& images) {
 
 		EC_ASSERT(images.size());
 
@@ -25,7 +25,7 @@ namespace ec {
 
 	}
 
-	void VulkanFramebuffer::destroy(VulkanContext& context)
+	void VulkanFramebuffer::destroy(const VulkanContext& context)
 	{
 		vkDestroyFramebuffer(context.getData().device, m_framebuffer, nullptr);
 	}

@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 
 namespace ec {
-	VkSampler createSampler(VulkanContext& context)
+	VkSampler createSampler(const VulkanContext& context)
 	{
 		
 		VkSamplerCreateInfo samplerCreateInfo = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
@@ -24,7 +24,7 @@ namespace ec {
 		return sampler;
 
 	}
-	VkDescriptorPool createDesciptorPool(VulkanContext& context, uint32_t maxSets, const std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t flags) {
+	VkDescriptorPool createDesciptorPool(const VulkanContext& context, uint32_t maxSets, const std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t flags) {
 
 		VkDescriptorPool result = 0;
 
@@ -39,7 +39,7 @@ namespace ec {
 		return result;
 	}
 
-	 VkDescriptorSetLayout createSetLayout(VulkanContext& context, const std::vector<VkDescriptorSetLayoutBinding>& bindings) {
+	 VkDescriptorSetLayout createSetLayout(const VulkanContext& context, const std::vector<VkDescriptorSetLayoutBinding>& bindings) {
 
 		VkDescriptorSetLayout result;
 
@@ -52,7 +52,7 @@ namespace ec {
 		return result;
 	}
 
-	 VkDescriptorSet allocateDescriptorSet(VulkanContext& context, VkDescriptorPool pool, VkDescriptorSetLayout layout) {
+	 VkDescriptorSet allocateDescriptorSet(const VulkanContext& context, VkDescriptorPool pool, VkDescriptorSetLayout layout) {
 
 		VkDescriptorSet result;
 
@@ -66,7 +66,7 @@ namespace ec {
 		return result;
 	}
 
-	 void writeDescriptorUniformBuffer(VulkanContext& context, VkDescriptorSet descriptorSet, uint32_t binding, VulkanBuffer& buffer, bool dynamic, uint32_t offset, uint32_t range) {
+	 void writeDescriptorUniformBuffer(const VulkanContext& context, VkDescriptorSet descriptorSet, uint32_t binding, VulkanBuffer& buffer, bool dynamic, uint32_t offset, uint32_t range) {
 
 		VkDescriptorBufferInfo bufferInfo;
 		bufferInfo.buffer = buffer.getBuffer();
@@ -84,7 +84,7 @@ namespace ec {
 
 	}
 
-	 void writeCombinedImageSampler(VulkanContext& context, VkDescriptorSet descriptorSet, uint32_t binding, const VulkanImage& image, VkSampler sampler) {
+	 void writeCombinedImageSampler(const VulkanContext& context, VkDescriptorSet descriptorSet, uint32_t binding, const VulkanImage& image, VkSampler sampler) {
 
 		VkDescriptorImageInfo imageInfo;
 		imageInfo.imageView = image.getImageView();
@@ -233,12 +233,13 @@ namespace ec {
 
 		description.inputAttachmentCount = (uint32_t)inputAttachments.size();
 		description.pInputAttachments = inputAttachments.data();
+		
 
 		return description;
 
 	}
 
-	 VkCommandPool createCommandPool(VulkanContext& context) {
+	 VkCommandPool createCommandPool(const VulkanContext& context) {
 
 		VkCommandPool result = {};
 
@@ -251,7 +252,7 @@ namespace ec {
 
 	}
 
-	 VkCommandBuffer allocateCommandBuffer(VulkanContext& context, VkCommandPool commandPool) {
+	 VkCommandBuffer allocateCommandBuffer(const VulkanContext& context, VkCommandPool commandPool) {
 
 		VkCommandBuffer result = {};
 
@@ -266,7 +267,7 @@ namespace ec {
 
 	}
 
-	 VkFence createFence(VulkanContext& context) {
+	 VkFence createFence(const VulkanContext& context) {
 
 		VkFence result = {};
 
@@ -276,7 +277,7 @@ namespace ec {
 		return result;
 	}
 
-	 VkSemaphore createSemaphore(VulkanContext& context) {
+	 VkSemaphore createSemaphore(const VulkanContext& context) {
 
 		VkSemaphore result = {};
 
@@ -290,7 +291,7 @@ namespace ec {
 		return  (value + alignment - 1) & ~(alignment - 1);
 	}
 
-	 VkSurfaceKHR createSurface(VulkanContext& context, const Window& window) {
+	 VkSurfaceKHR createSurface(const VulkanContext& context, const Window& window) {
 
 		VkSurfaceKHR surface;
 		glfwCreateWindowSurface(context.getData().instance, window.getNativWindow(), nullptr, &surface);
@@ -298,7 +299,7 @@ namespace ec {
 
 	}
 
-	 void destroySurface(VulkanContext& context, VkSurfaceKHR surface) {
+	 void destroySurface(const VulkanContext& context, VkSurfaceKHR surface) {
 
 		vkDestroySurfaceKHR(context.getData().instance, surface, nullptr);
 	}

@@ -5,27 +5,55 @@
 
 namespace ec {
 
-	void VulkanQuadRenderer::create( VulkanContext& context, VulkanRendererCreateInfo& createInfo) {
+	void VulkanQuadRenderer::create(const VulkanContext& context, VulkanRendererCreateInfo& createInfo, uint32_t createFlags) {
 
 		m_window = createInfo.window;
+		m_flags = createFlags;
 
 		m_data.sampler = createSampler(context);
 
-		VkAttachmentDescription colorAttachment = createAttachment(1, createInfo.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
-		std::vector<VkAttachmentReference> colorAttachmentReferences = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
-		std::vector<VkAttachmentReference> resolveAttachments = {};
-		std::vector<VkAttachmentReference> inputAttachments = {};
-		VkSubpassDescription subpassDescription = createSubpass(colorAttachmentReferences, resolveAttachments, inputAttachments);
+		if (!(m_flags & QUAD_RENDERER_SWAPCHAIN_IS_RENDER_TARGET)) {
 
-		m_data.renderpass.create(context, { colorAttachment }, { subpassDescription });
+			VkAttachmentDescription colorAttachment = createAttachment(1, createInfo.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
+			std::vector<VkAttachmentReference> colorAttachmentReferences = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+			std::vector<VkAttachmentReference> resolveAttachments = {};
+			std::vector<VkAttachmentReference> inputAttachments = {};
+			VkSubpassDescription subpassDescription = createSubpass(colorAttachmentReferences, resolveAttachments, inputAttachments);
 
-		m_data.framebuffers.resize(createInfo.window->swapchain.getImages().size());
+			VkSubpassDependency waitBefore = {};
+			waitBefore.srcSubpass = VK_SUBPASS_EXTERNAL;
+			waitBefore.dstSubpass = 0;
+			waitBefore.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			waitBefore.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			waitBefore.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			waitBefore.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-		for (uint32_t i = 0; i < m_data.framebuffers.size(); i++) {
-			m_data.framebuffers[i].create(context, m_data.renderpass, { &createInfo.window->swapchain.getImages()[i]});
+			VkSubpassDependency waitAfter = {};
+			waitAfter.srcSubpass = 0;
+			waitAfter.dstSubpass = VK_SUBPASS_EXTERNAL;
+			waitAfter.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			waitAfter.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			waitAfter.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			waitAfter.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+			std::vector<VkSubpassDependency> dependencies;
+			dependencies.reserve(2);
+
+			if (m_flags & QUAD_RENDERER_WAIT_FOR_PREVIOUS_RENDERPASSES)
+				dependencies.push_back(waitBefore);
+			
+			if (m_flags &QUAD_RENDERER_WAIT_COLOR_ATTACHMENT_OUTPUT) 
+				dependencies.push_back(waitAfter);
+
+			m_data.renderpass.create(context, { colorAttachment }, { subpassDescription }, dependencies);
+
+			m_data.renderTarget.create(context, createInfo.window->swapchain.getWidth(), createInfo.window->swapchain.getHeight(), createInfo.window->swapchain.getFormat(), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1);
+
+			m_data.framebuffer.create(context, m_data.renderpass, { &m_data.renderTarget });
+
 		}
 
-		m_data.commandBuffer = allocateCommandBuffer(context, createInfo.commandPool);
+		m_data.commandBuffer = createInfo.commandBuffer;
 
 		// Index-Daten für das Rechteck
 		uint32_t indexData[] = {
@@ -55,7 +83,8 @@ namespace ec {
 
 		VulkanPipelineCreateInfo pipelineCreateInfo;
 		pipelineCreateInfo.subpassIndex = 0;
-		pipelineCreateInfo.renderpass = &m_data.renderpass;
+
+		pipelineCreateInfo.renderpass = (m_flags & (uint32_t) QUAD_RENDERER_SWAPCHAIN_IS_RENDER_TARGET) ? (VulkanRenderpass*) &createInfo.window->swapchain.getRenderpass() : &m_data.renderpass;
 		pipelineCreateInfo.depthTestEnabled = false;
 		pipelineCreateInfo.sampleCount = 1;
 		pipelineCreateInfo.vertexShaderFilePath = "shaders/VertexShader.spv";
@@ -68,7 +97,7 @@ namespace ec {
 		m_data.texturedQuadObjectUniformBuffer.create(context, MemoryType::Host_local, m_data.MAX_QUAD_COUNT);
 
 		m_data.texturedQuadGlobalUniformBuffer.create(context, MemoryType::Device_local);
-		glm::mat4 proj = glm::ortho(0.0f, 1280.0f, 0.0f, 720.0f, -1000.0f, 0.0f);
+		glm::mat4 proj = glm::ortho(createInfo.window->swapchain.getWidth() / -2.0f, createInfo.window->swapchain.getWidth() / 2.0f, createInfo.window->swapchain.getHeight() / -2.0f, createInfo.window->swapchain.getHeight() / 2.0f, 1000.0f, -1000.0f);
 		m_data.texturedQuadGlobalUniformBuffer.buffer.uploadData(context, &proj, sizeof(glm::mat4), 0);
 
 		m_data.texturedQuadGlobalDataDescriptorSet = allocateDescriptorSet(context, context.getData().generalDescriptorPool, m_data.texturedQuadPipeline.getShaders().getLayouts()[0]);
@@ -76,13 +105,14 @@ namespace ec {
 
 
 	}
-	void VulkanQuadRenderer::destroy(VulkanContext& context) {
+	void VulkanQuadRenderer::destroy(const VulkanContext& context) {
 		
-		for (uint32_t i = 0; i < m_data.framebuffers.size(); i++) {
-			m_data.framebuffers[i].destroy(context);
+		if (!(m_flags & QUAD_RENDERER_SWAPCHAIN_IS_RENDER_TARGET)) {
+			m_data.framebuffer.destroy(context);
+			m_data.renderTarget.destroy(context);
+			m_data.renderpass.destroy(context);
 		}
-		
-		m_data.renderpass.destroy(context);
+
 		m_data.vertexBuffer.destroy(context);
 		m_data.indexBuffer.destroy(context);
 
@@ -94,7 +124,7 @@ namespace ec {
 
 	}
 
-	void VulkanQuadRenderer::beginFrame(VulkanContext& context)
+	void VulkanQuadRenderer::beginFrame(const VulkanContext& context)
 	{
 
 		EC_ASSERT(m_data.state == QuadRendererState::OUT_OF_FRAME);
@@ -105,8 +135,8 @@ namespace ec {
 		VKA(vkBeginCommandBuffer(m_data.commandBuffer, &beginInfo));
 
 		VkRenderPassBeginInfo renderpassBeginInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-		renderpassBeginInfo.renderPass = m_data.renderpass.getRenderpass();
-		renderpassBeginInfo.framebuffer = m_data.framebuffers[m_window->swapchain.getCurrentIndex()].getFramebuffer();
+		renderpassBeginInfo.renderPass = (m_flags & QUAD_RENDERER_SWAPCHAIN_IS_RENDER_TARGET) ? m_window->swapchain.getRenderpass().getRenderpass() : m_data.renderpass.getRenderpass();
+		renderpassBeginInfo.framebuffer = (m_flags & QUAD_RENDERER_SWAPCHAIN_IS_RENDER_TARGET) ? m_window->swapchain.getFramebuffers()[m_window->swapchain.getCurrentIndex()].getFramebuffer() : m_data.framebuffer.getFramebuffer();
 		renderpassBeginInfo.renderArea = { 0,0, m_window->swapchain.getWidth(), m_window->swapchain.getHeight()};
 		renderpassBeginInfo.clearValueCount = 1;
 		VkClearValue clearValue = { 0.1f, 0.1f, 0.102f, 1.0f };
@@ -136,7 +166,7 @@ namespace ec {
 	}
 
 
-	void VulkanQuadRenderer::drawTexturedQuad(VulkanContext& context, const glm::vec3& position, const glm::vec3& scale, float angle, const glm::vec4& color, VulkanImage& image)
+	void VulkanQuadRenderer::drawTexturedQuad(const VulkanContext& context, const glm::vec3& position, const glm::vec3& scale, float angle, const glm::vec4& color,const VulkanImage& image)
 	{
 
 		EC_ASSERT(m_data.state == QuadRendererState::IN_FRAME);
@@ -163,7 +193,34 @@ namespace ec {
 
 	}
 
-	VkCommandBuffer VulkanQuadRenderer::endFrame(VulkanContext& context)
+	void VulkanQuadRenderer::drawTexturedQuad(const VulkanContext& context, const glm::mat4& transform, const glm::vec4& color, const VulkanImage& image)
+	{
+
+		EC_ASSERT(m_data.state == QuadRendererState::IN_FRAME);
+		EC_ASSERT(m_data.texturedQuadCount != m_data.MAX_QUAD_COUNT);
+
+		QuadUniformBuffer uniformBuffer;
+		uniformBuffer.transform = transform;
+		uniformBuffer.color = color;
+
+		VkDescriptorSet descriptorSet = allocateDescriptorSet(context, m_data.descriptorPool, m_data.texturedQuadPipeline.getShaders().getLayouts()[1]);
+
+		uint32_t alignedSize = alignToPow2((uint32_t)context.getData().deviceProperties.limits.minUniformBufferOffsetAlignment, sizeof(QuadUniformBuffer));
+		uint32_t offset = m_data.texturedQuadCount * alignedSize;
+
+		m_data.texturedQuadObjectUniformBuffer.buffer.uploadData(context, &uniformBuffer, sizeof(QuadUniformBuffer), offset);
+
+		writeDescriptorUniformBuffer(context, descriptorSet, 0, m_data.texturedQuadObjectUniformBuffer.buffer, true, 0, alignedSize);
+		writeCombinedImageSampler(context, descriptorSet, 1, image, m_data.sampler);
+
+		vkCmdBindDescriptorSets(m_data.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_data.texturedQuadPipeline.getLayout(), 1, 1, &descriptorSet, 1, &offset);
+		vkCmdDrawIndexed(m_data.commandBuffer, 6, 1, 0, 0, 0);
+
+		m_data.texturedQuadCount++;
+
+	}
+
+	void VulkanQuadRenderer::endFrame(const VulkanContext& context)
 	{
 		EC_ASSERT(m_data.state == QuadRendererState::IN_FRAME);
 		vkCmdEndRenderPass(m_data.commandBuffer);
@@ -171,7 +228,7 @@ namespace ec {
 		vkEndCommandBuffer(m_data.commandBuffer);
 		m_data.state = QuadRendererState::OUT_OF_FRAME;
 		m_data.texturedQuadCount = 0;
-		return m_data.commandBuffer;
+		
 	}
 
 	const VulkanQuadRendererData& VulkanQuadRenderer::getData() const
