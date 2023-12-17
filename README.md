@@ -14,7 +14,7 @@ It currently uses exclusivly Vulkan as the graphics API.
 - Basic 3D redering 
 - ImGui as Editor UI
 
-### Current Goal
+### Current Goals
 
 - Basic scene/level editor
 - Asset Management, asset browser
@@ -31,7 +31,13 @@ It currently uses exclusivly Vulkan as the graphics API.
 
 1. **Clone the Repository:** 
     ```bash
-    git clone https://github.com/your/repository.git
+    git clone --recursive https://github.com/Anton-Horn/geee.git
+    ```
+    ```bash
+    cd geee
+    ```
+    ```bash
+    build.bat
     ```
 
 2. **Building the Application:**
@@ -52,24 +58,24 @@ It currently uses exclusivly Vulkan as the graphics API.
 ```cpp
 #include "ec.h"
 
-void create(ec::Application& app) {
+void createApp(ec::Application& app) {
 
 }
 
-void update() {
+void updateApp() {
 
 }
 
-void terminate() {
+void terminateApp() {
 
 }
 
 // ...
 
 ec::ApplicationCreateInfo createInfo;
-createInfo.createCallback = create;
-createInfo.updateCallback = update;
-createInfo.terminateCallback = terminate;
+createInfo.createCallback = createApp;
+createInfo.updateCallback = updateApp;
+createInfo.terminateCallback = terminateApp;
 createInfo.windowCreateInfo = { 1280, 720, "window_name" };
 
 ec::Application app;
