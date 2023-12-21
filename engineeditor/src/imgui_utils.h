@@ -10,7 +10,7 @@ namespace ec {
 struct ImGuiUtilsCreateInfo {
 
 	const ec::VulkanWindow* window;
-	ec::VulkanContext* context;
+	const ec::VulkanContext* context;
 	ec::Renderer* renderer;
 
 };

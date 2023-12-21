@@ -26,6 +26,18 @@ namespace ec {
 		
 	};
 
+	struct RendererBeginFrameInfo {
+
+		bool* recreateSwapchain;
+
+	};
+
+	struct RendererPresentFrameInfo {
+
+		bool* recreateSwapchain;
+
+	};
+
 	class Renderer {
 
 	public:
@@ -33,10 +45,10 @@ namespace ec {
 		void create(RendererCreateInfo& rendererCreateInfo);
 		void setSceneData(const Scene& scene);
 
-		void beginFrame();
+		void beginFrame(RendererBeginFrameInfo& beginInfo);
 		void drawFrame();
 		void submitFrame();
-		void presentFrame();
+		void presentFrame(RendererPresentFrameInfo& presentInfo);
 
 		void destroy();
 

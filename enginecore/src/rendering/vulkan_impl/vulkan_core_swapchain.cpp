@@ -127,26 +127,26 @@ namespace ec {
 		vkDestroySwapchainKHR(context.getData().device, m_swapchain, nullptr);
 	}
 
-	bool VulkanSwapchain::aquireNextImage(const VulkanContext& context, VkSemaphore signalSemaphore)
+	void VulkanSwapchain::aquireNextImage(const VulkanContext& context, VkSemaphore signalSemaphore, bool& recreateSwapchain)
 	{
 		VkResult r = vkAcquireNextImageKHR(context.getData().device, m_swapchain, UINT64_MAX, signalSemaphore, 0, &m_currentSwapchainImageIndex);
 		if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
-			return true;
+			recreateSwapchain = true;
 		}
 		else {
 			VKA(r);
-			return false;
+			recreateSwapchain = false;
 		}
 	}
 
-	bool VulkanSwapchain::present(const VulkanContext& context, const std::vector<VkSemaphore> waitSemaphores)
+	void VulkanSwapchain::present(const VulkanContext& context, const std::vector<VkSemaphore> waitSemaphores, bool& recreateSwapchain)
 	{
 
 		VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
 		presentInfo.swapchainCount = 1;
 
 		presentInfo.pSwapchains = &m_swapchain;
-		presentInfo.waitSemaphoreCount = waitSemaphores.size();
+		presentInfo.waitSemaphoreCount = (uint32_t) waitSemaphores.size();
 		presentInfo.pWaitSemaphores = waitSemaphores.data();
 
 		uint32_t currentIndex = m_currentSwapchainImageIndex;
@@ -155,11 +155,11 @@ namespace ec {
 
 		VkResult r = vkQueuePresentKHR(context.getData().queue, &presentInfo);
 		if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
-			return true;
+			recreateSwapchain = true;
 		}
 		else {
 			VKA(r);
-			return false;
+			recreateSwapchain = false;
 		}
 
 	}

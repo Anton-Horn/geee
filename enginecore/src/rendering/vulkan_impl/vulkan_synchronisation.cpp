@@ -30,7 +30,7 @@ namespace ec {
 
 		VKA(vkResetFences(context.getData().device, 1, &m_fence));
 
-		recreateSwapchain = window.swapchain.aquireNextImage(context, m_aquireSemaphore);
+		window.swapchain.aquireNextImage(context, m_aquireSemaphore, recreateSwapchain);
 
 	}
 

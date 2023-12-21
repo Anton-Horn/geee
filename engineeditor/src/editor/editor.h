@@ -5,7 +5,7 @@
 struct SharedWindowData {
 
 	ec::Entity selectedEntity;
-	ec::Scene scene;
+	ec::Scene* scene;
 
 	SharedWindowData() = default;
 	~SharedWindowData() = default;
@@ -89,6 +89,7 @@ struct EditorCreateInfo {
 
 	void* viewportImageView;
 	void* sampler;
+	ec::Scene* scene;
 
 };
 
@@ -107,6 +108,7 @@ public:
 
 	void update();
 	void create(EditorCreateInfo& createInfo);
+	void changeScene(ec::Scene* scene);
 	void destroy();
 
 	const SharedWindowData& getSharedData() const;

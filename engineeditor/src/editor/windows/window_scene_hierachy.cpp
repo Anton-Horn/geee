@@ -25,7 +25,7 @@ void SceneHierachyWindow::update() {
 
 	if (!open) { ImGui::End(); return; }
 
-	std::vector<ec::Entity> entities = m_sharedData->scene.getEntities();
+	std::vector<ec::Entity> entities = m_sharedData->scene->getEntities();
 
 	for (uint32_t i = 0; i < entities.size(); i++) {
 		
@@ -77,7 +77,7 @@ void SceneHierachyWindow::update() {
 
 			if (ImGui::Selectable("Remove Entity")) {
 
-				m_sharedData->scene.destroyEntity(e);
+				m_sharedData->scene->destroyEntity(e);
 				m_sharedData->selectedEntity = ec::NullEntity{};
 
 			}
@@ -102,7 +102,7 @@ void SceneHierachyWindow::update() {
 
 		if (ImGui::Selectable("Add Entity")) {
 
-			m_sharedData->selectedEntity = m_sharedData->scene.createEntity();
+			m_sharedData->selectedEntity = m_sharedData->scene->createEntity();
 
 		}
 

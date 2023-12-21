@@ -170,4 +170,25 @@ project "entt"
         optimize "On"
         symbols "Off"
         runtime "Release"
+
+project "json"
+    kind "None"
+    cppdialect "C++11"
+    location "%{prj.name}"
+    staticruntime "on"
+        
+    files {"%{prj.name}/single_include/nlohmann/json.hpp" }
+        
+    includedirs {
+        "%{prj.name}/single_include",
+    }
+        
+    filter "configurations:Debug"
+        symbols "On"
+        runtime "Debug"
+        
+    filter "configurations:Release"
+        optimize "On"
+        symbols "Off"
+        runtime "Release"
     

@@ -99,12 +99,14 @@ namespace ec {
 
 	}
 
-	void Renderer::beginFrame()
+	void Renderer::beginFrame(RendererBeginFrameInfo& beginInfo)
 	{
 
 		bool recreateSwapchain = false;
 		m_data->synController.waitAndAquireImage(m_data->context, m_data->window, recreateSwapchain);
 		if (recreateSwapchain) recreate();
+
+		if (beginInfo.recreateSwapchain) *beginInfo.recreateSwapchain = recreateSwapchain;
 
 		VKA(vkResetCommandPool(m_data->context.getData().device, m_data->commandPool, 0));
 
@@ -140,11 +142,15 @@ namespace ec {
 		m_data->synController.submitFrame(m_data->context, m_data->window, m_data->commandBuffers);
 
 	}
-	void Renderer::presentFrame()
+	void Renderer::presentFrame(RendererPresentFrameInfo& presentInfo)
 	{
-		if (m_data->window.swapchain.present(m_data->context, { m_data->synController.getSubmitSemaphore() })) {
-			recreate();
-		}
+		bool recreateSwapchain = false;
+		m_data->window.swapchain.present(m_data->context, { m_data->synController.getSubmitSemaphore() }, recreateSwapchain);
+
+		if (recreateSwapchain)
+		recreate();
+		
+		if (presentInfo.recreateSwapchain) *presentInfo.recreateSwapchain = recreateSwapchain;
 	
 	}
 	void Renderer::destroy() {
@@ -162,9 +168,6 @@ namespace ec {
 
 		m_data->quadRenderer.destroy(m_data->context);
 		m_data->presentRenderer.destroy(m_data->context);
-		/*m_data->goochRenderer.destroy(m_data->context);
-		m_data->bezierRenderer.destroy(m_data->context);
-		m_data->mandelbrotRenderer.destroy(m_data->context);*/
 
 		destroySurface(m_data->context, m_data->window.surface);
 		m_data->context.destroy();
@@ -225,6 +228,7 @@ namespace ec {
 
 	void Renderer::recreate()
 	{
+
 		m_data->commandBuffers.clear();
 
 		m_data->synController.waitDeviceIdle(m_data->context);

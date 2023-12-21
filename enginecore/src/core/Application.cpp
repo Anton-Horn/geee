@@ -13,6 +13,10 @@ namespace ec {
 		Log::create();
 		m_window.create(createInfo.windowCreateInfo);
 
+		m_eventSystem.addEventListener(std::bind(&Application::handleEvents, this, std::placeholders::_1));
+		m_eventSystem.addEventListener(createInfo.eventCallback);
+
+		// render, asset loader thread
 		m_jobSystem.create(2);
 
 		RendererCreateInfo rendererCreateInfo;
@@ -53,12 +57,38 @@ namespace ec {
 		return m_renderer;
 	}
 
+	bool Application::handleEvents(const Event& event)
+	{
+		return false;
+	}
+
+	const Scene& Application::getScene() const
+	{
+		return m_scene;
+	}
+
+	Scene& Application::getScene()
+	{
+		return m_scene;
+	}
+
 	void Application::frame()
 	{
 		
 		m_window.update(m_windowShouldClose);
 
-		m_renderer.beginFrame();
+		bool recreateApplication;
+
+		// Thread scene synchronisation
+		m_renderer.setSceneData(m_scene);
+
+		RendererBeginFrameInfo beginInfo;
+		beginInfo.recreateSwapchain = &recreateApplication;
+		m_renderer.beginFrame(beginInfo);
+
+		if (recreateApplication) {
+			m_eventSystem.triggerEvent({ EventType::ApplicationRecreateEvent, nullptr, 0 });
+		}
 
 		m_jobSystem.queueJob([this] {
 
@@ -75,9 +105,13 @@ namespace ec {
 
 		m_renderer.submitFrame();
 
-		m_renderer.presentFrame();
+		RendererPresentFrameInfo presentInfo;
+		presentInfo.recreateSwapchain = &recreateApplication;
+		m_renderer.presentFrame(presentInfo);
 
-
+		if (recreateApplication) {
+			m_eventSystem.triggerEvent({ EventType::ApplicationRecreateEvent, nullptr, 0 });
+		}
 	}
 
 }

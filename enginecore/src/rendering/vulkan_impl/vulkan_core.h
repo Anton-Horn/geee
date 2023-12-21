@@ -217,11 +217,10 @@ namespace ec {
 		void recreate(const VulkanContext& context, VkSurfaceKHR surface);
 		void destroy(const VulkanContext& context);
 
-		//returns true if swapchain needs to be recreated
-		bool aquireNextImage(const VulkanContext& context, VkSemaphore signalSemaphore);
-
-		//returns true if swapchain needs to be recreated
-		bool present(const VulkanContext& context, const std::vector<VkSemaphore> waitSemaphores);
+		
+		void aquireNextImage(const VulkanContext& context, VkSemaphore signalSemaphore, bool& recreateSwapchain);
+		
+		void present(const VulkanContext& context, const std::vector<VkSemaphore> waitSemaphores, bool& recreateSwapchain);
 
 		uint32_t getWidth() const;
 		uint32_t getHeight() const;

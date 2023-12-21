@@ -4,9 +4,15 @@
 
 void Editor::create(EditorCreateInfo& createInfo)
 {
+	m_sharedData.scene = createInfo.scene;
 	m_sceneHierachyPanel.create(&m_sharedData);
 	m_inspecorWindow.create(&m_sharedData);
 	m_viewportWindow.create(&m_sharedData, createInfo.viewportImageView, createInfo.sampler);
+}
+
+void Editor::changeScene(ec::Scene* scene)
+{
+	m_sharedData.scene = scene;
 }
 
 void Editor::destroy() {

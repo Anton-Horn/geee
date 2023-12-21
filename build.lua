@@ -12,6 +12,7 @@ workspace "gameengine"
     IncludeDirs["glm"] = "enginecore/libs/glm"
     IncludeDirs["cgltf"] = "enginecore/libs/cgltf"
     IncludeDirs["entt"] = "enginecore/libs/entt/single_include"
+    IncludeDirs["json"] = "enginecore/libs/json/single_include"
     Library = {}
     Library["Vulkan"] = "%{VULKAN_SDK}/Lib"
 
@@ -36,7 +37,8 @@ project "enginecore"
         IncludeDirs["vma"],
         IncludeDirs["glm"],
         IncludeDirs["cgltf"],
-        IncludeDirs["entt"]
+        IncludeDirs["entt"],
+        IncludeDirs["json"]
     }
 
     libdirs {

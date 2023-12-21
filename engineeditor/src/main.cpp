@@ -9,13 +9,7 @@
 
 Editor editor;
 
-
-void recreateApp() {
-   /* imGuiUtilsDestroy();
-    imGuiUtilsCreate();*/
-}
-
-ec::Application* app;
+ec::Application* application;
 
 void createApp(ec::Application& app) { 
 
@@ -29,7 +23,11 @@ void createApp(ec::Application& app) {
     EditorCreateInfo editorCreateInfo;
     editorCreateInfo.sampler = app.getRenderer().getData().presentRenderer.getData().sampler;
     editorCreateInfo.viewportImageView = app.getRenderer().getData().presentRenderer.getData().renderTarget.getImageView();
+    editorCreateInfo.scene = &app.getScene();
     editor.create(editorCreateInfo);
+
+
+    application = &app;
 }
 
 void updateApp() {
@@ -48,6 +46,27 @@ void terminateApp() {
     imGuiUtilsDestroy();
 }
 
+bool handleEvents(const ec::Event& event) {
+
+    if (event.eventType == ec::EventType::ApplicationRecreateEvent) {
+        editor.destroy();
+        imGuiUtilsDestroy();
+        ImGuiUtilsCreateInfo data;
+        data.context = &application->getRenderer().getData().context;
+        data.window = &application->getRenderer().getData().window;
+        data.renderer = &application->getRenderer();
+        imGuiUtilsCreate(data);
+
+        EditorCreateInfo editorCreateInfo;
+        editorCreateInfo.sampler = application->getRenderer().getData().presentRenderer.getData().sampler;
+        editorCreateInfo.viewportImageView = application->getRenderer().getData().presentRenderer.getData().renderTarget.getImageView();
+        editorCreateInfo.scene = &application->getScene();
+        editor.create(editorCreateInfo);
+    }
+
+    return false;
+}
+
 
 int main() {
 
@@ -55,6 +74,7 @@ int main() {
 	createInfo.createCallback = createApp;
 	createInfo.updateCallback = updateApp;
     createInfo.terminateCallback = terminateApp;
+    createInfo.eventCallback = handleEvents;
 	createInfo.windowCreateInfo = { 1280, 720, "editor" };
 
 	ec::Application app;

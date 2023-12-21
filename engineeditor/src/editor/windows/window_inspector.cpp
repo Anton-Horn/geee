@@ -51,6 +51,7 @@ void InspectorWindow::update() {
 	if (!m_sharedData->selectedEntity.valid()) { ImGui::End(); return; }
 
 	ImGui::Text(m_sharedData->selectedEntity.getTag().c_str());
+	ImGui::Text(std::to_string(m_sharedData->selectedEntity.getID()).c_str());
 
 	drawComponentUI<ec::TransformComponent>(m_sharedData->selectedEntity);
 	

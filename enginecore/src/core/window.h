@@ -27,7 +27,6 @@ namespace ec {
 		Window(Window&&) = delete;
 		Window& operator=(Window&&) = delete;
 
-
 		void create(WindowCreateInfo& createInfo);
 		void update(bool& open) const;
 		void terminate();
