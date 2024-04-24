@@ -25,11 +25,11 @@ namespace ec {
 
 	}
 
-	void JobSystem::queueJob(const std::function<void()>& task)
+	void JobSystem::queueJob(const std::function<void()>& task, bool shouldWait)
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_mutex);
-			m_jobs.push(task);
+			m_jobs.push(std::make_tuple(task, shouldWait));
 		}
 		m_waitJob.notify_one();
 
@@ -68,15 +68,20 @@ namespace ec {
 			if (m_shouldStop) {
 				return;
 			}
-			std::function<void()> task = m_jobs.front();
+
+			std::tuple<std::function<void()>, bool> task = m_jobs.front();
+
 			m_jobs.pop();
+			if (std::get<1>(task))
 			m_occupiedWorkers++;
 
 			lock.unlock();		
-			task();
+			std::get<0>(task)();
 
-			std::lock_guard<std::mutex> lock1(m_mutex);
-			m_occupiedWorkers--;
+			if (std::get<1>(task)) {
+				std::lock_guard<std::mutex> lock1(m_mutex);
+				m_occupiedWorkers--;
+			}
 
 		}
 

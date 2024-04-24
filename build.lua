@@ -49,10 +49,10 @@ project "enginecore"
         "glfw",
         "vulkan-1.lib",
     }
+    
+    defines {"_CRT_SECURE_NO_WARNINGS", "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS"}
 
-    defines {"_CRT_SECURE_NO_WARNINGS"}
-
-    disablewarnings {"4099"}
+    disablewarnings {"4099", "4996"}
 
     filter "configurations:Debug"
         defines { "DEBUG"}  
@@ -102,7 +102,8 @@ project "engineeditor"
         "imgui"
     }
 
-    defines {"_CRT_SECURE_NO_WARNINGS"}
+    defines {"_CRT_SECURE_NO_WARNINGS", "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS"}
+    disablewarnings {"4996"}
     ignoredefaultlibraries { "LIBCMTD" }
 
     filter "configurations:Debug"

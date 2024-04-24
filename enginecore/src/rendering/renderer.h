@@ -1,8 +1,8 @@
 #pragma once
 #include "core/core.h"
 #include "core/window.h"
+#include "core/event_system.h"
 #include "scene/scene.h"
-
 
 namespace ec {
 
@@ -15,15 +15,28 @@ namespace ec {
 
 		// if not set we also wait for the renderer to finish each frame
 		// this is for the editor viewport synchronisation
-		RENDERER_PRESENT_TO_SWAPCHAIN = 1
+		RENDERER_PRESENT_TO_SWAPCHAIN = 1,
+
+		//can only be set if renderer does not present to swapchain
+		RENDERER_DONT_AQUIRE_IMAGE = 2,
+
+		RENDERER_CUSTOM_COMMAND_BUFFERS = 4,
+
+		RENDERER_CUSTOM_QUEUE_SUBMIT = 8,
+
+		RENDERER_ENABLE_VULKAN_INTERFACE = 16
+
+		
 
 	};
+
+	struct VulkanSynchronizationControllerCreateInfo;
 
 	struct RendererCreateInfo {
 
 		const Window* window;
-		RendererFlags flags;
-		
+		uint32_t flags;
+
 	};
 
 	struct RendererBeginFrameInfo {
@@ -38,12 +51,17 @@ namespace ec {
 
 	};
 
+	struct VulkanWindow;
+	class VulkanContext;
+	struct VulkanDataInterface;
+
 	class Renderer {
 
 	public:
 
+		EC_DEFAULT_CON_DEFAULT_DE_NO_COPY_NO_MOVE(Renderer)
+
 		void create(RendererCreateInfo& rendererCreateInfo);
-		void setSceneData(const Scene& scene);
 
 		void beginFrame(RendererBeginFrameInfo& beginInfo);
 		void drawFrame();
@@ -54,26 +72,22 @@ namespace ec {
 
 		void waitDeviceIdle();
 
-		//Should only be called if in RendererCreateInfo, presentToSwapchain = false
-		void* getPresentImageHandle();
-		//Should only be called if in RendererCreateInfo, presentToSwapchain = false
-		void* getPresentImageView();
+		bool handleEvents(const Event& event);
 
-		void* getCommandBuffer(void* commandPool = nullptr);
-
-		Renderer();
-		~Renderer();
-
-		const RendererData& getData() const;
-		RendererData& getData();
+		const VulkanDataInterface& getVulkanData() const;
 
 	private:
+		
+		VulkanDataInterface* m_vulkanDataInterface;
 
 		void recreate();
-		
-		std::unique_ptr<RendererData> m_data;
-		std::unique_ptr<RendererSceneData> m_sceneData;
-		RendererFlags m_flags = RENDERER_NONE;
+		RendererData* m_data;
+		RendererSceneData* m_sceneData;
+		uint32_t m_flags = RENDERER_NONE;
+		bool m_recreateSwapchain = false;
+
+		void createVulkanDataInterface();
+
 	};
 
 }

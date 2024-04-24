@@ -10,4 +10,4 @@ struct MandelbrotSpec {
 
 };
 
-void drawMandelbrot(ec::Renderer& renderer);
+void drawMandelbrot();

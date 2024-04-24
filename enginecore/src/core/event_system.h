@@ -1,7 +1,9 @@
 #pragma once
 #include <vector>
+#include <mutex>
 
 #include "core/core.h"
+
 
 namespace ec {
 
@@ -29,9 +31,20 @@ namespace ec {
 		void addEventListener(std::function<bool(const Event&)> listener);
 		void triggerEvent(const Event& event, bool all = true);
 
+		// thread safe
+		void triggerEventDeferred(const Event& event, bool all = true);
+
+		//should only be called on the main thread while synchronized
+		void handleDeferredEvents();
+
+		void create();
+		void destroy();
+
 	private:
 
 		std::vector<std::function<bool(const Event&)>> m_eventListeners;
+		std::vector<std::pair<Event, bool>> m_deferredEventQueue;
+		std::mutex m_mutex;
 
 	};
 

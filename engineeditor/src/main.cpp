@@ -9,25 +9,14 @@
 
 Editor editor;
 
-ec::Application* application;
-
 void createApp(ec::Application& app) { 
-
-    ImGuiUtilsCreateInfo data;
-    data.context = &app.getRenderer().getData().context;
-    data.window = &app.getRenderer().getData().window;
-    data.renderer = &app.getRenderer();
     
-    imGuiUtilsCreate(data);
+    imGuiUtilsCreate();
 
     EditorCreateInfo editorCreateInfo;
-    editorCreateInfo.sampler = app.getRenderer().getData().presentRenderer.getData().sampler;
-    editorCreateInfo.viewportImageView = app.getRenderer().getData().presentRenderer.getData().renderTarget.getImageView();
-    editorCreateInfo.scene = &app.getScene();
+    editorCreateInfo.viewportImageView = app.getRenderer().getVulkanData().getPresentImageView();
     editor.create(editorCreateInfo);
-
-
-    application = &app;
+    
 }
 
 void updateApp() {
@@ -40,6 +29,10 @@ void updateApp() {
 
 }
 
+void synchronizedUpdate() {
+    editor.synchronizedUpdate();
+}
+
 void terminateApp() {
 
     editor.destroy();
@@ -50,34 +43,31 @@ bool handleEvents(const ec::Event& event) {
 
     if (event.eventType == ec::EventType::ApplicationRecreateEvent) {
         editor.destroy();
-        imGuiUtilsDestroy();
-        ImGuiUtilsCreateInfo data;
-        data.context = &application->getRenderer().getData().context;
-        data.window = &application->getRenderer().getData().window;
-        data.renderer = &application->getRenderer();
-        imGuiUtilsCreate(data);
+        imGuiUtilsRecreate();
 
         EditorCreateInfo editorCreateInfo;
-        editorCreateInfo.sampler = application->getRenderer().getData().presentRenderer.getData().sampler;
-        editorCreateInfo.viewportImageView = application->getRenderer().getData().presentRenderer.getData().renderTarget.getImageView();
-        editorCreateInfo.scene = &application->getScene();
+        editorCreateInfo.viewportImageView = ec::Application::getInstance().getRenderer().getVulkanData().getPresentImageView();
         editor.create(editorCreateInfo);
     }
 
     return false;
 }
 
-
 int main() {
 
-	ec::ApplicationCreateInfo createInfo;
+    ec::Application app;
+
+    ec::ApplicationCreateInfo createInfo = {};
 	createInfo.createCallback = createApp;
 	createInfo.updateCallback = updateApp;
     createInfo.terminateCallback = terminateApp;
     createInfo.eventCallback = handleEvents;
+    createInfo.synchronizedUpdateCallback = synchronizedUpdate;
 	createInfo.windowCreateInfo = { 1280, 720, "editor" };
+    createInfo.customRendererCreateInfo.flags = ec::RENDERER_DONT_AQUIRE_IMAGE |ec::RENDERER_CUSTOM_COMMAND_BUFFERS |ec::RENDERER_CUSTOM_QUEUE_SUBMIT | ec::RENDERER_ENABLE_VULKAN_INTERFACE;
+    createInfo.flags = ec::APPLICATION_USE_CUSTOM_RENDERER_CREATE_INFO;
+    createInfo.app = &app;
 
-	ec::Application app;
 	app.create(createInfo);
 
 	return 0;

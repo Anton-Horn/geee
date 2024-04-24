@@ -3,6 +3,7 @@
 #include <functional>
 #include <vector>
 #include <queue>
+#include <mutex>
 
 #include "core.h"
 
@@ -25,7 +26,7 @@ namespace ec {
 		void create(uint32_t threadCount);
 		void destroy();
 
-		void queueJob(const std::function<void()>& task);
+		void queueJob(const std::function<void()>& task, bool shouldWait = true);
 		bool busy();
 		void waitIdle();
 
@@ -36,8 +37,8 @@ namespace ec {
 		std::vector<std::thread> m_threads;
 
 		std::mutex m_mutex;
-		std::queue<std::function<void()>> m_jobs;
-
+		std::queue<std::tuple<std::function<void()>, bool>> m_jobs;
+		
 		std::condition_variable m_waitJob;
 		
 

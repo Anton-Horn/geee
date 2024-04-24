@@ -15,12 +15,14 @@ DONE:
 - basic editor gui
 - implement basic renderer/application multithreading
 - correct semaphore stage flags when submiting, imgui, renderer
-
-CURRENT:
 - resizing, viewport image, imgui semaphore, command buffers and mabye more
 
-TODO:
+CURRENT:
+
+- main thread queue
 - Asset Manager
+
+TODO:
 - Implement gltf model loading 2.0: create Model Importer
 - Physically Based Rendering
 - input

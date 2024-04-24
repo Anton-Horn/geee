@@ -247,7 +247,7 @@ namespace ec {
 		createInfo.queueFamilyIndex = context.getData().queueFamilyIndex;
 		createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 
-		vkCreateCommandPool(context.getData().device, &createInfo, nullptr, &result);
+		VKA(vkCreateCommandPool(context.getData().device, &createInfo, nullptr, &result));
 		return result;
 
 	}
@@ -261,7 +261,7 @@ namespace ec {
 		allocateInfo.commandBufferCount = 1;
 		allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-		vkAllocateCommandBuffers(context.getData().device, &allocateInfo, &result);
+		VKA(vkAllocateCommandBuffers(context.getData().device, &allocateInfo, &result));
 
 		return result;
 
@@ -273,7 +273,7 @@ namespace ec {
 
 		VkFenceCreateInfo createInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
 		createInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-		vkCreateFence(context.getData().device, &createInfo, nullptr, &result);
+		VKA(vkCreateFence(context.getData().device, &createInfo, nullptr, &result));
 		return result;
 	}
 
@@ -283,7 +283,7 @@ namespace ec {
 
 		VkSemaphoreCreateInfo createInfo = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
 
-		vkCreateSemaphore(context.getData().device, &createInfo, nullptr, &result);
+		VKA(vkCreateSemaphore(context.getData().device, &createInfo, nullptr, &result));
 		return result;
 	}
 
@@ -294,7 +294,7 @@ namespace ec {
 	 VkSurfaceKHR createSurface(const VulkanContext& context, const Window& window) {
 
 		VkSurfaceKHR surface;
-		glfwCreateWindowSurface(context.getData().instance, window.getNativWindow(), nullptr, &surface);
+		VKA(glfwCreateWindowSurface(context.getData().instance, window.getNativWindow(), nullptr, &surface));
 		return surface;
 
 	}

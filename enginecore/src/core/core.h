@@ -21,8 +21,11 @@
 													 x(const x&&) = delete;\
 													 x& operator=(const x&&) = delete;\
 
+
+
 #define LOG_ASSERT_PASSED 
 #undef LOG_ASSERT_PASSED
+
 
 #ifdef EC_WINDOWS
 	

@@ -4,15 +4,11 @@
 
 void Editor::create(EditorCreateInfo& createInfo)
 {
-	m_sharedData.scene = createInfo.scene;
 	m_sceneHierachyPanel.create(&m_sharedData);
 	m_inspecorWindow.create(&m_sharedData);
-	m_viewportWindow.create(&m_sharedData, createInfo.viewportImageView, createInfo.sampler);
-}
-
-void Editor::changeScene(ec::Scene* scene)
-{
-	m_sharedData.scene = scene;
+	m_viewportWindow.create(&m_sharedData, createInfo.viewportImageView);
+	m_assetManagerWindow.create(&m_sharedData);
+	
 }
 
 void Editor::destroy() {
@@ -20,6 +16,7 @@ void Editor::destroy() {
 	m_sceneHierachyPanel.destroy();
 	m_inspecorWindow.destroy();
 	m_viewportWindow.destroy();
+	m_assetManagerWindow.destroy();
 
 }
 const SharedWindowData& Editor::getSharedData() const
@@ -51,5 +48,11 @@ void Editor::update() {
 	m_sceneHierachyPanel.update();
 	m_inspecorWindow.update();
 	m_viewportWindow.update();
+	m_assetManagerWindow.update();
 
+}
+
+void Editor::synchronizedUpdate()
+{
+	m_assetManagerWindow.synchronizedUpdate();
 }

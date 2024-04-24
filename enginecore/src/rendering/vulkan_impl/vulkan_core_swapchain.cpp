@@ -139,7 +139,19 @@ namespace ec {
 		}
 	}
 
-	void VulkanSwapchain::present(const VulkanContext& context, const std::vector<VkSemaphore> waitSemaphores, bool& recreateSwapchain)
+	void VulkanSwapchain::aquireNextImage(const VulkanContext& context, bool& recreateSwapchain)
+	{
+		VkResult r = vkAcquireNextImageKHR(context.getData().device, m_swapchain, UINT64_MAX, 0, 0, &m_currentSwapchainImageIndex);
+		if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
+			recreateSwapchain = true;
+		}
+		else {
+			VKA(r);
+			recreateSwapchain = false;
+		}
+	}
+
+	void VulkanSwapchain::present(const VulkanContext& context, const std::vector<VkSemaphore>& waitSemaphores, bool& recreateSwapchain)
 	{
 
 		VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
@@ -155,6 +167,7 @@ namespace ec {
 
 		VkResult r = vkQueuePresentKHR(context.getData().queue, &presentInfo);
 		if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR) {
+
 			recreateSwapchain = true;
 		}
 		else {

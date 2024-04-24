@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 
 #include "imgui_utils.h"
+#include "core/application.h"
 #include "rendering/vulkan_impl/vulkan_utils.h"
 #include "rendering/vulkan_impl/vulkan_synchronisation.h"
 #include "rendering/vulkan_impl/vulkan_renderer.h"
@@ -21,14 +22,33 @@ struct ImGuiData {
     std::vector<ec::VulkanFramebuffer> framebuffers;
     VkCommandPool commandPool;
 
+    const ec::VulkanWindow* window;
+    const ec::VulkanContext* context;
+    const ec::Renderer* renderer;
+
+    VkFence fence;
+    VkSemaphore presentWaitSemaphore;
+    VkSemaphore aquireSemaphore;
+
+    bool recreateSwapchain = false;
+
 };
 
-ImGuiData imguiData;
-ImGuiUtilsCreateInfo utilsData;
 
-void imGuiUtilsCreate(ImGuiUtilsCreateInfo& createInfo)
+
+ImGuiData imguiData;
+
+void imGuiUtilsCreate()
 {
-    utilsData = createInfo;
+
+    imguiData.renderer = &ec::Application::getInstance().getRenderer();
+    imguiData.window = imguiData.renderer->getVulkanData().window;
+    imguiData.context = imguiData.renderer->getVulkanData().context;
+
+    imguiData.fence = (VkFence) imguiData.renderer->getVulkanData().addBeginFrameWaitingFence();
+    imguiData.presentWaitSemaphore = (VkSemaphore)imguiData.renderer->getVulkanData().addPresentWaitSemaphore();
+
+    imguiData.aquireSemaphore = ec::createSemaphore(*imguiData.renderer->getVulkanData().context);
 
     VkDescriptorPoolSize poolSizes[] =
     {
@@ -51,7 +71,7 @@ void imGuiUtilsCreate(ImGuiUtilsCreateInfo& createInfo)
     poolInfo.maxSets = 1000 * ARRAY_COUNT(poolSizes);
     poolInfo.poolSizeCount = (uint32_t)ARRAY_COUNT(poolSizes);
     poolInfo.pPoolSizes = poolSizes;
-    VKA(vkCreateDescriptorPool(utilsData.context->getData().device, &poolInfo, nullptr, &imguiData.descriptorPool));
+    VKA(vkCreateDescriptorPool(imguiData.context->getData().device, &poolInfo, nullptr, &imguiData.descriptorPool));
 
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -63,18 +83,18 @@ void imGuiUtilsCreate(ImGuiUtilsCreateInfo& createInfo)
 
     ImGui::StyleColorsDark();
 
-    ImGui_ImplGlfw_InitForVulkan(utilsData.window->window->getNativWindow(), true);
+    ImGui_ImplGlfw_InitForVulkan(imguiData.window->window->getNativWindow(), true);
 
-    const ec::VulkanContextData& contextData = utilsData.context->getData();
+    const ec::VulkanContextData& contextData = imguiData.context->getData();
 
-    VkAttachmentDescription colorAttachment = ec::createAttachment(1, utilsData.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
+    VkAttachmentDescription colorAttachment = ec::createAttachment(1, imguiData.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
     std::vector<VkAttachmentReference> colorAttachmentReferences = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
     std::vector<VkAttachmentReference> resolveAttachments = {};
     std::vector<VkAttachmentReference> inputAttachments = {};
 
     VkSubpassDescription subpassDescription = ec::createSubpass(colorAttachmentReferences, resolveAttachments, inputAttachments);
 
-    imguiData.renderpass.create(*utilsData.context, { colorAttachment }, { subpassDescription });
+    imguiData.renderpass.create(*imguiData.context, { colorAttachment }, { subpassDescription });
 
     ImGui_ImplVulkan_InitInfo initInfo = {};
     initInfo.Instance = contextData.instance;
@@ -84,14 +104,14 @@ void imGuiUtilsCreate(ImGuiUtilsCreateInfo& createInfo)
     initInfo.Queue = contextData.queue;
     initInfo.DescriptorPool = imguiData.descriptorPool;
     initInfo.MinImageCount = 2;
-    initInfo.ImageCount = (uint32_t)utilsData.window->swapchain.getImages().size();
+    initInfo.ImageCount = (uint32_t)imguiData.window->swapchain.getImages().size();
     initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
     ImGui_ImplVulkan_Init(&initInfo, imguiData.renderpass.getRenderpass());
 
-    imguiData.commandPool = ec::createCommandPool(*utilsData.context);
-    imguiData.commandBuffer = (VkCommandBuffer) utilsData.renderer->getCommandBuffer(imguiData.commandPool);
-   
+    imguiData.commandPool = ec::createCommandPool(*imguiData.context);
+    //imguiData.commandBuffer = (VkCommandBuffer) utilsData.renderer->getCommandBuffer(imguiData.commandPool);
+    imguiData.commandBuffer = ec::allocateCommandBuffer(*imguiData.context, imguiData.commandPool);
 
     VKA(vkResetCommandPool(contextData.device, imguiData.commandPool, 0));
 
@@ -115,13 +135,39 @@ void imGuiUtilsCreate(ImGuiUtilsCreateInfo& createInfo)
 
     ImGui_ImplVulkan_DestroyFontUploadObjects();
 
-    imguiData.framebuffers.resize(utilsData.window->swapchain.getImages().size());
+    imguiData.framebuffers.resize(imguiData.window->swapchain.getImages().size());
 
     for (uint32_t i = 0; i < imguiData.framebuffers.size(); i++) {
-        imguiData.framebuffers[i].create(*utilsData.context, imguiData.renderpass, { &utilsData.window->swapchain.getImages()[i] });
+        imguiData.framebuffers[i].create(*imguiData.context, imguiData.renderpass, { &imguiData.window->swapchain.getImages()[i] });
     }
 
     imGuiStyle();
+
+}
+
+void imGuiUtilsRecreate()
+{
+
+    imguiData.renderpass.destroy(*imguiData.context);
+
+    VkAttachmentDescription colorAttachment = ec::createAttachment(1, imguiData.window->swapchain.getFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE);
+    std::vector<VkAttachmentReference> colorAttachmentReferences = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+    std::vector<VkAttachmentReference> resolveAttachments = {};
+    std::vector<VkAttachmentReference> inputAttachments = {};
+
+    VkSubpassDescription subpassDescription = ec::createSubpass(colorAttachmentReferences, resolveAttachments, inputAttachments);
+
+    imguiData.renderpass.create(*imguiData.context, { colorAttachment }, { subpassDescription });
+
+    for (uint32_t i = 0; i < imguiData.framebuffers.size(); i++) {
+        imguiData.framebuffers[i].destroy(*imguiData.context);
+    }
+
+    imguiData.framebuffers.resize(imguiData.window->swapchain.getImages().size());
+
+    for (uint32_t i = 0; i < imguiData.framebuffers.size(); i++) {
+        imguiData.framebuffers[i].create(*imguiData.context, imguiData.renderpass, { &imguiData.window->swapchain.getImages()[i] });
+    }
 
 }
 
@@ -130,19 +176,20 @@ void imGuiUtilsDestroy()
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
-    vkDestroyDescriptorPool(utilsData.context->getData().device, imguiData.descriptorPool, nullptr);
-    vkDestroyCommandPool(utilsData.context->getData().device, imguiData.commandPool, nullptr);
+    vkDestroyDescriptorPool(imguiData.context->getData().device, imguiData.descriptorPool, nullptr);
+    vkDestroyCommandPool(imguiData.context->getData().device, imguiData.commandPool, nullptr);
     for (uint32_t i = 0; i < imguiData.framebuffers.size(); i++) {
-        imguiData.framebuffers[i].destroy(*utilsData.context);
+        imguiData.framebuffers[i].destroy(*imguiData.context);
     }
-    imguiData.renderpass.destroy(*utilsData.context);
+    imguiData.renderpass.destroy(*imguiData.context);
+    vkDestroySemaphore(imguiData.context->getData().device, imguiData.aquireSemaphore, nullptr);
 
 }
 
 void imGuiUtilsBeginFrame()
 {
 
-    VKA(vkResetCommandPool(utilsData.context->getData().device, imguiData.commandPool, 0));
+    VKA(vkResetCommandPool(imguiData.context->getData().device, imguiData.commandPool, 0));
 
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -153,10 +200,15 @@ void imGuiUtilsBeginFrame()
 
     VKA(vkBeginCommandBuffer(imguiData.commandBuffer, &beginInfo));
 
+    imguiData.renderer->getVulkanData().aquireNextSwapchainImage(imguiData.aquireSemaphore, imguiData.recreateSwapchain);
+
+    if (imguiData.recreateSwapchain) return;
+
     VkRenderPassBeginInfo renderpassBeginInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
     renderpassBeginInfo.renderPass = imguiData.renderpass.getRenderpass();
-    renderpassBeginInfo.framebuffer = imguiData.framebuffers[utilsData.window->swapchain.getCurrentIndex()].getFramebuffer();
-    renderpassBeginInfo.renderArea = { 0,0, utilsData.window->swapchain.getWidth(), utilsData.window->swapchain.getHeight() };
+
+    renderpassBeginInfo.framebuffer = imguiData.framebuffers[imguiData.window->swapchain.getCurrentIndex()].getFramebuffer();
+    renderpassBeginInfo.renderArea = { 0,0, imguiData.window->swapchain.getWidth(), imguiData.window->swapchain.getHeight() };
     renderpassBeginInfo.clearValueCount = 1;
     VkClearValue clearValue = { 0.1f, 0.1f, 0.102f, 1.0f };
     renderpassBeginInfo.pClearValues = &clearValue;
@@ -168,15 +220,32 @@ void imGuiUtilsBeginFrame()
 void imGuiUtilsEndFrame()
 {
 
-    ImGui::Render();
-    ImDrawData* main_draw_data = ImGui::GetDrawData();
+    if (imguiData.recreateSwapchain) {
+        ec::Application::getInstance().getEventSystem().triggerEventDeferred({ ec::EventType::ApplicationRecreateEvent, nullptr, 0 });
+        return;
+    }
 
-    ImGui_ImplVulkan_RenderDrawData(main_draw_data, imguiData.commandBuffer);
+    ImGui::Render();
+    ImDrawData* mainDrawData = ImGui::GetDrawData();
+
+    ImGui_ImplVulkan_RenderDrawData(mainDrawData, imguiData.commandBuffer);
 
     vkCmdEndRenderPass(imguiData.commandBuffer);
     vkEndCommandBuffer(imguiData.commandBuffer);
 
-    //vkQueueSubmit(utilsData.context->getData().queue, 1, &submitInfo, imguiData.fence);
+    VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &imguiData.commandBuffer;
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &imguiData.presentWaitSemaphore;
+   
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &imguiData.aquireSemaphore;
+
+    VkPipelineStageFlags waitMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    submitInfo.pWaitDstStageMask = &waitMask;
+     
+    imguiData.renderer->getVulkanData().submitFrameSynchronized({ imguiData.commandBuffer }, false, imguiData.fence, imguiData.presentWaitSemaphore, imguiData.aquireSemaphore);
 
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();

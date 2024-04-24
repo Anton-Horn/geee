@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <unordered_map>
 #include <thread>
+#include <mutex>
 
 #include "core/core.h"
 #include "core/job_system.h"
@@ -16,6 +17,8 @@ namespace ec {
 
 	};
 
+	std::string assetTypeToString(AssetType type);
+
 	enum class AssetExtension {
 
 		UNKNOWN,
@@ -28,12 +31,13 @@ namespace ec {
 	enum class AssetState {
 
 		UNLOADED,
-		PENDING_CPU,
 		LOADED_CPU,
-		PENDING_GPU,
-		LOADED_GPU
+		LOADED_GPU,
+		LOADED_CPU_GPU
 
 	};
+
+	std::string assetStateToString(AssetState state);
 
 	enum class AssetManagerLoadingType {
 
@@ -42,27 +46,32 @@ namespace ec {
 
 	};
 
-	struct Asset {
-
-		AssetType type;
-		AssetExtension extension;
-		AssetState state;
-
-		//relative asset path from working dir, if AssetManagerLoadingType = ASSET_PACK, path should be empty
-		std::filesystem::path assetPath;
-
-		std::unique_ptr<void> assetData;
-		std::unique_ptr<void> asset;
-
-		std::mutex assetMutex;
-
-		Asset() = default;
-
-	};
-
 	struct AssetHandle {
 
 		uint64_t assetID;
+
+	};
+
+	struct Asset {
+
+		//relative asset path from working dir, if AssetManagerLoadingType = ASSET_PACK, path should be empty
+		
+		void* assetData;
+		std::filesystem::path assetPath;
+		AssetState state;
+		
+		struct AssetInfo {
+
+			AssetHandle handle;
+			AssetType type;
+			AssetExtension extension;
+
+		} const info;
+
+		Asset() : info({0, AssetType::UNKNOWN, AssetExtension::UNKNOWN}), assetData(nullptr), assetPath(), state(AssetState::UNLOADED) {}
+
+		Asset(void* assetData, const std::filesystem::path& assetPath, AssetState state, const AssetInfo& info) : 
+			assetData(assetData), assetPath(assetPath),state(state), info(info)  {}
 
 	};
 
@@ -76,8 +85,9 @@ namespace ec {
 
 	};
 
-	void loadTexture2DAssetCPU(Asset& asset);
-	void unloadTexture2DAssetCPU(const Asset& asset);
+	// Asset Loaders
+	void loadTexture2DAssetCPU(const Asset& asset, void*& assetDataPtr);
+	void unloadTexture2DAssetCPU(const Asset& asset, void*& assetDataPtr);
 
 	class AssetManager {
 
@@ -94,7 +104,8 @@ namespace ec {
 		//Thread safe
 		AssetHandle createAsset(const std::filesystem::path& assetPath);
 
-		const Asset& getAsset(const AssetHandle& handle);
+		const void* getAssetData(const AssetHandle& handle);
+		AssetState getAssetState(const AssetHandle& handle);
 
 		void loadAssetCPU(const AssetHandle& handle);
 		void loadAssetGPU(const AssetHandle& handle);
@@ -103,6 +114,15 @@ namespace ec {
 		void unloadAssetGPU(const AssetHandle& handle);
 
 		bool exists(const AssetHandle& handle);
+		bool exists(const Asset& asset);
+
+		void assetChangeState(const AssetHandle& handle, AssetState state);
+
+		//should only be called from main thread while no other thread is accessing the asset manager
+		void handleStates();
+
+		// returns copy of all assets in undefined order
+		std::vector<Asset> getAssetsCopy();
 
 	private:
 
@@ -111,10 +131,14 @@ namespace ec {
 
 		std::mutex m_mutex;
 
+		std::mutex m_stateMutex;
+
 		std::unordered_map<uint64_t, Asset> m_assets;
 
 		AssetManagerLoadingType m_loadingType;
 		std::filesystem::path m_assetPackPath;
+
+		std::vector<std::tuple<AssetState, AssetHandle>> m_assetStateChanges;
 
 		JobSystem* m_jobSystem;
 

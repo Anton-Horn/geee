@@ -17,6 +17,12 @@ project "spdlog"
         optimize "On"
         symbols "Off"
 
+    defines {
+        "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS"
+    }
+
+    disablewarnings {"4996"}
+
 project "glfw"
     location "%{prj.name}"
     language "C"

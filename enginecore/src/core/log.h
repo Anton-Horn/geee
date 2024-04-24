@@ -5,11 +5,14 @@
 
 //Log Defines
 
+
+
 #ifdef DEBUG 
-#define EC_LOG(...) Log::s_baseLogger->trace(__VA_ARGS__)
-#define EC_INFO(...) Log::s_baseLogger->info(__VA_ARGS__)
-#define EC_WARN(...) Log::s_baseLogger->warn(__VA_ARGS__)
-#define EC_ERROR(...) Log::s_baseLogger->error(__VA_ARGS__)
+#define EC_LOG(...) Log::logger->info(__VA_ARGS__)
+#define EC_INFO(...) Log::logger->info(__VA_ARGS__)
+#define EC_WARN(...) Log::logger->warn(__VA_ARGS__)
+#define EC_ERROR(...) Log::logger->error(__VA_ARGS__)
+#define EC_WARN_CON(con, ...) if ((con)) Log::logger->warn(__VA_ARGS__)
 #else
 #define EC_LOG(...) 
 #define EC_WARN(...) 
@@ -25,7 +28,7 @@ class Log {
 
 public:
 
-	static std::shared_ptr<spdlog::logger> s_baseLogger;
+	static std::shared_ptr<spdlog::logger> logger;
 
 	static void create();
 	static void terminate();

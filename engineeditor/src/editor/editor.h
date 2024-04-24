@@ -1,11 +1,12 @@
 #pragma once
 #include <functional>
 #include "scene/scene.h"
+#include "core/application.h"
 
 struct SharedWindowData {
 
 	ec::Entity selectedEntity;
-	ec::Scene* scene;
+	ec::Scene scene;
 
 	SharedWindowData() = default;
 	~SharedWindowData() = default;
@@ -73,7 +74,7 @@ public:
 	ViewportWindow(const ViewportWindow&&) = delete;
 	ViewportWindow& operator=(const ViewportWindow&&) = delete;
 
-	void create(SharedWindowData* sharedData, void* imageView, void* sampler);
+	void create(SharedWindowData* sharedData, void* imageView);
 	void update();
 	void destroy();
 
@@ -82,14 +83,34 @@ private:
 	void* m_renderImageDescriptorSet;
 
 	SharedWindowData* m_sharedData;
+	void* m_sampler;
+
+};
+
+
+// for debugging
+class AssetManagerWindow {
+
+public:
+
+	EC_DEFAULT_CON_DEFAULT_DE_NO_COPY_NO_MOVE(AssetManagerWindow);
+
+	void create(SharedWindowData* sharedData);
+	void update();
+	void synchronizedUpdate();
+	void destroy();
+
+private:
+
+	SharedWindowData* m_sharedData;
+
+	std::vector<ec::Asset> m_assets;
 
 };
 
 struct EditorCreateInfo {
 
 	void* viewportImageView;
-	void* sampler;
-	ec::Scene* scene;
 
 };
 
@@ -106,9 +127,10 @@ public:
 	Editor(const Editor&&) = delete;
 	Editor& operator=(const Editor&&) = delete;
 
-	void update();
+	
 	void create(EditorCreateInfo& createInfo);
-	void changeScene(ec::Scene* scene);
+	void update();
+	void synchronizedUpdate();
 	void destroy();
 
 	const SharedWindowData& getSharedData() const;
@@ -120,6 +142,7 @@ private:
 	SceneHierachyWindow m_sceneHierachyPanel;
 	InspectorWindow m_inspecorWindow;
 	ViewportWindow m_viewportWindow;
+	AssetManagerWindow m_assetManagerWindow;
 
 	SharedWindowData m_sharedData;
 

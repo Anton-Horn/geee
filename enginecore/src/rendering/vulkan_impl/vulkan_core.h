@@ -219,8 +219,9 @@ namespace ec {
 
 		
 		void aquireNextImage(const VulkanContext& context, VkSemaphore signalSemaphore, bool& recreateSwapchain);
+		void aquireNextImage(const VulkanContext& context, bool& recreateSwapchain);
 		
-		void present(const VulkanContext& context, const std::vector<VkSemaphore> waitSemaphores, bool& recreateSwapchain);
+		void present(const VulkanContext& context, const std::vector<VkSemaphore>& waitSemaphores, bool& recreateSwapchain);
 
 		uint32_t getWidth() const;
 		uint32_t getHeight() const;

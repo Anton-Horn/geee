@@ -8,10 +8,10 @@
 glm::vec2 mpos;
 MandelbrotSpec spec;
 
-void drawMandelbrot(ec::Renderer& renderer)
+void drawMandelbrot()
 {
 
-    if (glfwGetMouseButton(renderer.getData().window.window->getNativWindow(), GLFW_MOUSE_BUTTON_3)) {
+    /*if (glfwGetMouseButton(renderer.getData().window.window->getNativWindow(), GLFW_MOUSE_BUTTON_3)) {
 
          double x = 0, y = 0;
 
@@ -47,6 +47,6 @@ void drawMandelbrot(ec::Renderer& renderer)
     ImGui::DragFloat2("C0", (float*) &spec.csX, 1.0f / value);
     ImGui::DragFloat("Iterations", (float*) &spec.iterations, 1.0f, 0.0f, 10000.0f);
 
-    ImGui::End();
+    ImGui::End();*/
 
 }

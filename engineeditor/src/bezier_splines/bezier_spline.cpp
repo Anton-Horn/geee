@@ -49,16 +49,16 @@ void BezierSpline::handleInput(float mx, float my, bool mdown) {
 
 }
 
-void BezierSpline::draw(ec::Renderer& renderer)
+void BezierSpline::draw()
 {
 
-    renderer.getData().bezierRenderer.drawCurve(renderer.getData().context, m_points[0], m_points[3], m_points[1], m_points[2], { 1.0f, 1.0f, 1.0f, 1.0f });
+    //renderer.getData().bezierRenderer.drawCurve(renderer.getData().context, m_points[0], m_points[3], m_points[1], m_points[2], { 1.0f, 1.0f, 1.0f, 1.0f });
 
-    for (uint32_t i = 3; i < m_points.size(); i += 3) {
+   /* for (uint32_t i = 3; i < m_points.size(); i += 3) {
    
         if (i + 3 < m_points.size()) 
             renderer.getData().bezierRenderer.drawCurve(renderer.getData().context,m_points[0 + i], m_points[3 + i], m_points[1 + i], m_points[2 + i], { 1.0f, 1.0f, 1.0f, 1.0f });
 
-    }
+    }*/
 
 }
